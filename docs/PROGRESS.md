@@ -66,3 +66,14 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - Artifact: 1,506 deployed bytes, code hash `0x50468dfcb559cc885cbc6d4310d8a4d4c00f6f52d27ee94e0920e36a63e4df6d`.
 - Review: ABI exposes only `openDebt` and `repayDebt` as state-mutating functions; only `DebtOpened` and `DebtRepaid` events exist. `principalOpened` has no post-open increase path, and `opened` has no reset path.
 - Evidence level: local VM only. No Sepolia deployment or actual source event is claimed before T05.
+
+## T05 preparation — testnet-only signer
+
+- Status: **BLOCKED — FAUCET FUNDING REQUIRED**. T05 is not complete and no deployment transaction has been sent.
+- Generated public address: `0x122409763443d94060fAc61676d50c0B1006f49F`.
+- The private key exists only in the ignored local `.env`. It was not printed, copied into documentation, staged, or committed.
+- Fresh balance check on 2026-09-06 KST: Sepolia ETH `0`; Creditcoin CC3 Testnet tCTC `0`.
+- Required next action: fund the public address with Sepolia ETH and CC3 Testnet tCTC, then re-check both balances before any signed transaction.
+- Creditcoin's official faucet flow is Discord `token-faucet` → `/faucet address:<EVM address>`: <https://docs.creditcoin.org/wallets/using-testnet-faucet>.
+- Sepolia faucet options are listed by Ethereum.org: <https://ethereum.org/developers/docs/networks/#sepolia>.
+- Safety boundary: this is a plaintext testnet-only development key. Never send mainnet ETH, production CTC, stablecoins, or any asset with real value to it.
