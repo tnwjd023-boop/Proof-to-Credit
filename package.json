@@ -1,0 +1,27 @@
+{
+  "name": "proof-to-credit",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Loan-scoped proof-derived principal for a separate credit-allocation policy",
+  "type": "commonjs",
+  "scripts": {
+    "check-env": "node scripts/check-env.js",
+    "compile": "node scripts/compile.js",
+    "probe": "node scripts/probe-proof.js",
+    "test": "node --test"
+  },
+  "engines": {
+    "node": ">=22"
+  },
+  "dependencies": {
+    "@ethereumjs/common": "4.4.0",
+    "@ethereumjs/tx": "5.4.0",
+    "@ethereumjs/util": "9.1.0",
+    "@ethereumjs/vm": "8.1.1",
+    "@gluwa/usc-contracts": "0.1.2",
+    "@gluwa/usc-sdk": "0.18.0",
+    "dotenv": "17.4.2",
+    "ethers": "6.17.0",
+    "solc": "0.8.36"
+  }
+}

@@ -1,0 +1,55 @@
+{
+  "classification": "VERIFIED",
+  "startedAt": "2026-09-05T22:49:17.857Z",
+  "completedAt": "2026-09-05T22:49:19.876Z",
+  "endpoints": {
+    "sourceRpc": "https://ethereum-sepolia-rpc.publicnode.com",
+    "destinationRpc": "https://rpc.cc3-testnet.creditcoin.network",
+    "proofApi": "https://proof-gen-api.cc3-testnet.creditcoin.network/api/v1",
+    "blockProver": "0x0000000000000000000000000000000000000FD2"
+  },
+  "mapping": {
+    "sourceEvmChainId": "11155111",
+    "destinationEvmChainId": "102031",
+    "chainKey": "1"
+  },
+  "health": {
+    "status": "healthy",
+    "cc3_rpc_connected": true,
+    "eth_rpc_connected": true,
+    "uptime_seconds": 358697
+  },
+  "sourceHead": 11643324,
+  "attestedHeight": 11643290,
+  "attestationLagBlocks": 34,
+  "txHash": "0x6714a6bfa1947b52dd58d22154e0dbe9e1ae1d5bdec28d952b8f0ccc7a02494e",
+  "blockNumber": 11642790,
+  "proof": {
+    "headerNumber": 11642790,
+    "txIndex": 0,
+    "derivedIndex": "0",
+    "cached": true,
+    "txBytesLength": 1248,
+    "merkleSiblingCount": 6,
+    "continuityRootCount": 11
+  },
+  "runtime": {
+    "normal": {
+      "method": "verify",
+      "verdict": true
+    },
+    "rootTampered": {
+      "method": "verifyAndEmit.eth_call",
+      "verdict": false,
+      "verifyFallbackReason": "execution reverted: \"Merkle proof validation failed\"",
+      "rejection": "execution reverted: \"Merkle proof validation failed\""
+    },
+    "continuityTampered": {
+      "method": "verifyAndEmit.eth_call",
+      "verdict": false,
+      "verifyFallbackReason": "execution reverted: \"Continuity proof does not match attestation or checkpoint\"",
+      "rejection": "execution reverted: \"Continuity proof does not match attestation or checkpoint\""
+    }
+  },
+  "note": "eth_call verified runtime behavior only; it did not persist application storage or prove E2E deployment."
+}

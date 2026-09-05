@@ -1,0 +1,11 @@
+node_modules/
+.env
+.env.*
+!.env.example
+.tools/
+artifacts/
+cache/
+runs/*
+!runs/probe/
+!runs/probe/.gitkeep
+!runs/probe/*.json
