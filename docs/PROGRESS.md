@@ -54,3 +54,15 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - Verifier boundary: `TestOnlyVerifierMock` remains under the test tree. T03 does not claim local cryptographic proof verification.
 - Commit SHA: **BLOCKED** — no `git` executable is available.
 - T04 start condition: satisfied; the source single-draw state machine can now be implemented against a fixed compiler and VM path.
+
+## T04 — source single-draw state machine
+
+- Status: **DONE**.
+- Changed: `contracts/source/SingleDrawLoanMock.sol`, `test/source.test.js`, `test/helpers/vm.js`, `docs/SOURCE_BASELINE.md`, `docs/PROGRESS.md`.
+- TDD RED: `node test/source.test.js` failed because the stateful `deployContract` VM helper did not exist.
+- First GREEN attempt exposed the documented EthereumJS API distinction: `runCode` returns `ExecResult`, while `runCall` wraps it as `execResult`. The helper was corrected at that boundary.
+- GREEN: source-focused suite passed 4/4, covering the exact external mutation surface, open50→repay20, event/storage consistency, second open, reopen after full repayment, unauthorized calls, zero amounts, pre-open repay, and over-repayment with state invariance.
+- Compiler: solc `0.8.36`, `viaIR=true`, `evmVersion=paris`, optimizer runs `200`.
+- Artifact: 1,506 deployed bytes, code hash `0x50468dfcb559cc885cbc6d4310d8a4d4c00f6f52d27ee94e0920e36a63e4df6d`.
+- Review: ABI exposes only `openDebt` and `repayDebt` as state-mutating functions; only `DebtOpened` and `DebtRepaid` events exist. `principalOpened` has no post-open increase path, and `opened` has no reset path.
+- Evidence level: local VM only. No Sepolia deployment or actual source event is claimed before T05.

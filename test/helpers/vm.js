@@ -3,9 +3,9 @@
 const fs = require('node:fs');
 const path = require('node:path');
 const { Chain, Common, Hardfork } = require('@ethereumjs/common');
-const { hexToBytes } = require('@ethereumjs/util');
+const { Address, bytesToHex, hexToBytes } = require('@ethereumjs/util');
 const { VM } = require('@ethereumjs/vm');
-const { Interface, toBeHex, zeroPadValue } = require('ethers');
+const { Interface, concat, getAddress, toBeHex, zeroPadValue } = require('ethers');
 
 const ARTIFACT_PATH = path.join(__dirname, '..', '..', 'artifacts', 'contracts.json');
 
@@ -39,4 +39,64 @@ function replaceFirstWord(encoded, value) {
   return `${zeroPadValue(toBeHex(value), 32)}${encoded.slice(66)}`;
 }
 
-module.exports = { loadArtifact, replaceFirstWord, runPureLibrary };
+function revertError(iface, result) {
+  const data = bytesToHex(result.returnValue);
+  try {
+    const parsed = iface.parseError(data);
+    if (parsed) return new Error(`${parsed.name}(${[...parsed.args].join(',')})`);
+  } catch {}
+  return new Error(`EVM revert: ${result.exceptionError?.error || 'unknown'} (${data})`);
+}
+
+function parsedEvents(iface, logs = []) {
+  return logs.map(([, topics, data]) => {
+    const raw = { topics: topics.map(bytesToHex), data: bytesToHex(data) };
+    const parsed = iface.parseLog(raw);
+    return { name: parsed.name, args: parsed.args, topics: raw.topics, data: raw.data };
+  });
+}
+
+async function deployContract(contractName, constructorArgs, { caller }) {
+  const artifact = loadArtifact(contractName);
+  const iface = new Interface(artifact.abi);
+  const common = new Common({ chain: Chain.Sepolia, hardfork: Hardfork.Paris });
+  const vm = await VM.create({ common });
+  const callerAddress = Address.fromString(caller);
+  const deployment = await vm.evm.runCall({
+    caller: callerAddress,
+    data: hexToBytes(concat([artifact.bytecode, iface.encodeDeploy(constructorArgs)])),
+    gasLimit: 30_000_000n,
+  });
+  if (deployment.execResult.exceptionError || !deployment.createdAddress) {
+    throw revertError(iface, deployment.execResult);
+  }
+  const contractAddress = deployment.createdAddress;
+
+  async function execute(functionName, args, { caller: callFrom = caller, isStatic = false } = {}) {
+    const call = await vm.evm.runCall({
+      caller: Address.fromString(callFrom),
+      to: contractAddress,
+      data: hexToBytes(iface.encodeFunctionData(functionName, args)),
+      gasLimit: 30_000_000n,
+      isStatic,
+    });
+    const result = call.execResult;
+    if (result.exceptionError) throw revertError(iface, result);
+    const decoded = iface.decodeFunctionResult(functionName, result.returnValue);
+    const events = parsedEvents(iface, result.logs);
+    return {
+      result: decoded,
+      events,
+      blockTimestamp: events.length ? events[0].args[events[0].args.length - 1] : undefined,
+    };
+  }
+
+  return {
+    address: getAddress(contractAddress.toString()),
+    read: async (functionName, args = []) => (await execute(functionName, args, { isStatic: true })).result,
+    readOne: async (functionName, args = []) => (await execute(functionName, args, { isStatic: true })).result[0],
+    write: (functionName, args, options = {}) => execute(functionName, args, options),
+  };
+}
+
+module.exports = { deployContract, loadArtifact, replaceFirstWord, runPureLibrary };
