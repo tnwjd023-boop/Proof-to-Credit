@@ -21,6 +21,8 @@ Proof-to-Credit turns loan events decoded from proof-verified source transaction
 
 ## Public evidence
 
+Canonical testnet borrower and run signer (**testnet only**): `0x122409763443d94060fAc61676d50c0B1006f49F`
+
 | Evidence | Network | Transaction / record |
 |---|---|---|
 | `DebtOpened(50)` | Ethereum Sepolia | `0xa5c0954a0b148e84d37c68a87fc9d37d77c548f1aed4d522ee0c9009f92042cd` |
