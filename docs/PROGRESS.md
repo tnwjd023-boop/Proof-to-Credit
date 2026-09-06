@@ -69,11 +69,22 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 
 ## T05 preparation — testnet-only signer
 
-- Status: **BLOCKED — FAUCET FUNDING REQUIRED**. T05 is not complete and no deployment transaction has been sent.
+- Status: **DONE**. Both faucets were funded and T05 was executed on Sepolia.
 - Generated public address: `0x122409763443d94060fAc61676d50c0B1006f49F`.
 - The private key exists only in the ignored local `.env`. It was not printed, copied into documentation, staged, or committed.
-- Fresh balance check on 2026-09-06 KST: Sepolia ETH `0`; Creditcoin CC3 Testnet tCTC `0`.
-- Required next action: fund the public address with Sepolia ETH and CC3 Testnet tCTC, then re-check both balances before any signed transaction.
+- Pre-deployment balance check on 2026-09-06 KST: Sepolia ETH `0.05`; Creditcoin CC3 Testnet tCTC `10000`.
 - Creditcoin's official faucet flow is Discord `token-faucet` → `/faucet address:<EVM address>`: <https://docs.creditcoin.org/wallets/using-testnet-faucet>.
 - Sepolia faucet options are listed by Ethereum.org: <https://ethereum.org/developers/docs/networks/#sepolia>.
 - Safety boundary: this is a plaintext testnet-only development key. Never send mainnet ETH, production CTC, stablecoins, or any asset with real value to it.
+
+## T05 — Source deployment and first event
+
+- Status: **DONE — PUBLIC TESTNET EVIDENCE**.
+- Run: `20260906-t05`; public manifest: `runs/20260906-t05/manifest.json`.
+- Sepolia chain ID was checked as `11155111` before both signed transactions.
+- Source contract: `0x0c93759f8eC91B348D8C53EA03C1ae78ED543760`.
+- Deployment transaction: `0x8045ae26416b9d3844834747c34f28743ab423830cc9a08b674385feb02f0355`; receipt status `1`; deployed code `1,506` bytes; runtime code hash `0x192b3f605cc60b9ac70c17d16a9adfba195441c11ef0b140629fee784c533739`.
+- First opening transaction: `0xa5c0954a0b148e84d37c68a87fc9d37d77c548f1aed4d522ee0c9009f92042cd`; receipt status `1`; block `11643709`.
+- `DebtOpened` and getters agree: loan ID `0xf75242025a45e9d02bdb54af3e4b5c791fcd9c92704f3cd8d6ef558dc632dc2c`, sequence `1`, principal/outstanding `50,000,000`, cumulative repayment `0`.
+- Immutable scope: borrower `0x122409763443d94060fAc61676d50c0B1006f49F`, asset ID `0x4ac423f580111ce6c4fe187d4113c368aab45204509f55000ec90d4eb77a23e7`, unit ID `0xf013d3d74e873543dc0fbc4db2cda2753bb12e048dba74e108de8bf217543310`.
+- No token or real funds were lent. The contract records mock principal only; Sepolia ETH paid testnet gas.

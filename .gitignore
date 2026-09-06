@@ -6,6 +6,8 @@ node_modules/
 artifacts/
 cache/
 runs/*
+!runs/*/
+!runs/*/manifest.json
 !runs/probe/
 !runs/probe/.gitkeep
 !runs/probe/*.json

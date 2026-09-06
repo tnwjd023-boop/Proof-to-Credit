@@ -1,0 +1,31 @@
+{
+  "runId": "20260906-t05",
+  "createdAt": "2026-09-06T00:09:39.978Z",
+  "source": {
+    "network": "Ethereum Sepolia",
+    "chainId": "11155111",
+    "contractAddress": "0x0c93759f8eC91B348D8C53EA03C1ae78ED543760",
+    "deploymentTransactionHash": "0x8045ae26416b9d3844834747c34f28743ab423830cc9a08b674385feb02f0355",
+    "borrower": "0x122409763443d94060fAc61676d50c0B1006f49F",
+    "assetId": "0x4ac423f580111ce6c4fe187d4113c368aab45204509f55000ec90d4eb77a23e7",
+    "unitId": "0xf013d3d74e873543dc0fbc4db2cda2753bb12e048dba74e108de8bf217543310",
+    "deployedCodeHash": "0x192b3f605cc60b9ac70c17d16a9adfba195441c11ef0b140629fee784c533739",
+    "deployedCodeBytes": 1506
+  },
+  "opening": {
+    "transactionHash": "0xa5c0954a0b148e84d37c68a87fc9d37d77c548f1aed4d522ee0c9009f92042cd",
+    "blockNumber": 11643709,
+    "loanId": "0xf75242025a45e9d02bdb54af3e4b5c791fcd9c92704f3cd8d6ef558dc632dc2c",
+    "sequence": "1",
+    "principal": "50000000",
+    "outstanding": "50000000",
+    "sourceTimestamp": "1788653400",
+    "confirmedState": {
+      "opened": true,
+      "principalOpened": "50000000",
+      "totalRepaid": "0",
+      "outstanding": "50000000",
+      "sequence": "1"
+    }
+  }
+}

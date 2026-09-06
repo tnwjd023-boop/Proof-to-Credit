@@ -8,6 +8,8 @@
     "check-env": "node scripts/check-env.js",
     "compile": "node scripts/compile.js",
     "probe": "node scripts/probe-proof.js",
+    "source:deploy": "node scripts/deploy-source.js",
+    "source:open": "node scripts/source-actions.js open --amount 50",
     "test": "node --test",
     "wallet:create": "node scripts/create-testnet-wallet.js"
   },

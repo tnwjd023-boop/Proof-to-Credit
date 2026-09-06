@@ -25,4 +25,9 @@
 
 The suite verifies state remains unchanged after unauthorized open/repay, zero amount, repayment before opening, second opening, reopening after full repayment, and repayment greater than outstanding.
 
-This is local VM evidence, not a Sepolia deployment or transaction. T05 supplies public source-chain evidence.
+The local VM behavior is now complemented by T05 public Sepolia evidence:
+
+- Contract: `0x0c93759f8eC91B348D8C53EA03C1ae78ED543760`
+- Deployment transaction: `0x8045ae26416b9d3844834747c34f28743ab423830cc9a08b674385feb02f0355`
+- `DebtOpened` transaction: `0xa5c0954a0b148e84d37c68a87fc9d37d77c548f1aed4d522ee0c9009f92042cd`
+- Run manifest: `runs/20260906-t05/manifest.json`
