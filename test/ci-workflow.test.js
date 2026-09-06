@@ -21,10 +21,14 @@ test('CI runs the offline verification pipeline on main pushes and pull requests
   assert.match(workflow, /^          node-version: 22$/m);
   assert.match(workflow, /^          cache: npm$/m);
 
-  const commands = ['run: npm ci', 'run: npm test', 'run: npm run compile'];
+  const commands = ['run: npm ci', 'run: npm run compile', 'run: npm test'];
   const positions = commands.map((command) => workflow.indexOf(command));
   assert.ok(positions.every((position) => position >= 0), 'expected install, test, and compile commands');
-  assert.deepEqual([...positions].sort((a, b) => a - b), positions, 'CI commands must run in order');
+  assert.deepEqual(
+    [...positions].sort((a, b) => a - b),
+    positions,
+    'CI must compile ignored artifacts before tests consume them',
+  );
 
   assert.doesNotMatch(workflow, /secrets\./i);
   assert.doesNotMatch(workflow, /PRIVATE_KEY|RPC_URL|broadcast/i);
