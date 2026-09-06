@@ -35,3 +35,15 @@ T08 adds strict `(blockHeight, txIndex, logIndex)` ordering and binds query/even
 - Final verified state: principal `50,000,000`, repaid `20,000,000`, debt `30,000,000`, sequence/state version `2`
 
 This T09 deployment includes the T08 ordering rules and T09 repayment reconstruction. Earlier deployment addresses remain immutable historical evidence and are not aliases for this contract.
+
+## T12 final demo deployment
+
+- Decoder: `0x8006e5fdE6AC19A86D8bAe018191e2b12a3eB01E`
+- VerifiedDebtGate: `0xC97b7EA6de5fc4Cb39D7Fc52881B3d98f4b68147`
+- Gate deployment transaction: `0x35f06896f8f5e4f66132f50826da2b98bbbea41eda46f06e15fb6a75b7584bae`
+- Opening application: `0xf6587f667a069b272c9650e6dfdaf577c0b020ece3c200b8da85e2e5df890ebd`
+- Repayment application: `0xe13a4974cb8c79b5c81163081991b3a6e0823f4c4b382f0ef8ae8ab25e8dbcc0`
+- Credit commitment: `0xcf3d79a7d50c87dfc860bd067da91357c8bc695b5b48fb035cefa4571e3dbb20`
+- Final state: verified debt30, committed credit30, limit60, headroom0, state version3, policy version1
+
+This is the canonical T12 demo instance. Exact code hashes, blocks, decisions, and historical state hashes are in `runs/20260906-t05/manifest.json`.

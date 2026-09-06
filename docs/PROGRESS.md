@@ -148,3 +148,15 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - A policy change increments `policyVersion`, so a commitment carrying the earlier policy version fails. Unauthorized, uninitialized, zero, and over-limit paths leave state unchanged.
 - `CreditCommitted` records the borrower, amount, resulting commitment, both versions, and the pre-transition state hash.
 - TDD RED: all four cases failed because `commitCredit` was absent. GREEN: `test/commitment.test.js` passed 4/4.
+
+## T12 — Complete testnet financial-state demo
+
+- Status: **DONE — VERIFIED PUBLIC TESTNET DEMO**.
+- Final decoder: `0x8006e5fdE6AC19A86D8bAe018191e2b12a3eB01E`; final gate: `0xC97b7EA6de5fc4Cb39D7Fc52881B3d98f4b68147` on CC3 chain `102031`.
+- Opening proof submission: `0xf6587f667a069b272c9650e6dfdaf577c0b020ece3c200b8da85e2e5df890ebd`; repayment proof submission: `0xe13a4974cb8c79b5c81163081991b3a6e0823f4c4b382f0ef8ae8ab25e8dbcc0`.
+- At debt50, request30 was rejected: headroom10, proposed utilization80, reason `OVER_LIMIT`.
+- After the actual repay20 proof produced debt30, request30 was allowed exactly at limit60: headroom30, proposed utilization60.
+- Commit30 transaction: `0xcf3d79a7d50c87dfc860bd067da91357c8bc695b5b48fb035cefa4571e3dbb20`; receipt status `1`, CC3 block `5438009`.
+- After commit, request1 was rejected: committed credit30, headroom0, proposed utilization `60,000,001`, state version3, policy version1.
+- The run records source events, proof applications, and the policy commitment as distinct transactions. No real lending or token transfer occurred.
+- TDD RED: scenario test failed because `src/scenario-result.js` was absent. GREEN: the local reject→allow→commit→reject scenario passed before testnet execution.

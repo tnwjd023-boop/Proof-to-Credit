@@ -124,5 +124,95 @@
         "stateVersion": "2"
       }
     }
+  },
+  "destinationT12": {
+    "network": "Creditcoin CC3 Testnet",
+    "chainId": "102031",
+    "verifier": "0x0000000000000000000000000000000000000FD2",
+    "decoder": {
+      "address": "0x8006e5fdE6AC19A86D8bAe018191e2b12a3eB01E",
+      "deploymentTransactionHash": "0x64d9f1b4361bbfe1cf76ca96a8b416a7728e07c0fbbc6dac896f839a2333eb86",
+      "blockNumber": 5438003,
+      "codeHash": "0x6af1caad44e16d0090d318227b4a6feedc490e6c63399dcc642018d9968dc38d",
+      "codeBytes": 10272
+    },
+    "gate": {
+      "address": "0xC97b7EA6de5fc4Cb39D7Fc52881B3d98f4b68147",
+      "deploymentTransactionHash": "0x35f06896f8f5e4f66132f50826da2b98bbbea41eda46f06e15fb6a75b7584bae",
+      "blockNumber": 5438004,
+      "codeHash": "0xe1bf87b40816204268d21f7485739fb4bc323cc6eb3bb7515d34765719cb5eef",
+      "codeBytes": 7450
+    },
+    "initialCreditLimit": "60000000",
+    "submissions": {
+      "debt-opened": {
+        "transactionHash": "0xf6587f667a069b272c9650e6dfdaf577c0b020ece3c200b8da85e2e5df890ebd",
+        "blockNumber": 5438006,
+        "receiptStatus": 1,
+        "initialized": true,
+        "principalOpened": "50000000",
+        "totalRepaid": "0",
+        "verifiedDebt": "50000000",
+        "lastSequence": "1",
+        "lastSourceBlock": "11643709",
+        "lastTxIndex": "80",
+        "stateVersion": "1"
+      },
+      "debt-repaid": {
+        "transactionHash": "0xe13a4974cb8c79b5c81163081991b3a6e0823f4c4b382f0ef8ae8ab25e8dbcc0",
+        "blockNumber": 5438008,
+        "receiptStatus": 1,
+        "initialized": true,
+        "principalOpened": "50000000",
+        "totalRepaid": "20000000",
+        "verifiedDebt": "30000000",
+        "lastSequence": "2",
+        "lastSourceBlock": "11643980",
+        "lastTxIndex": "77",
+        "stateVersion": "2"
+      }
+    },
+    "demo": {
+      "classification": "VERIFIED",
+      "headroomPath": [
+        "10000000",
+        "30000000",
+        "0"
+      ],
+      "committedCredit": "30000000",
+      "commitTransactionHash": "0xcf3d79a7d50c87dfc860bd067da91357c8bc695b5b48fb035cefa4571e3dbb20",
+      "commitBlockNumber": 5438009,
+      "receiptStatus": 1,
+      "decisions": {
+        "beforeRepayment": {
+          "allowed": false,
+          "reason": "3",
+          "observedHeadroom": "10000000",
+          "proposedUtilization": "80000000",
+          "stateHash": "0x8ba85e7082b3f76049548b0d4c30d49e3eefb0def4a2a5d6c466612cc27decfc",
+          "stateVersion": "1",
+          "policyVersion": "1"
+        },
+        "afterRepayment": {
+          "allowed": true,
+          "reason": "0",
+          "observedHeadroom": "30000000",
+          "proposedUtilization": "60000000",
+          "stateHash": "0xd7053550e421141881e6d9260a78a8f10e40141b6fe138c69e469fabc9f3fd50",
+          "stateVersion": "2",
+          "policyVersion": "1"
+        },
+        "afterCommit": {
+          "allowed": false,
+          "reason": "3",
+          "observedHeadroom": "0",
+          "proposedUtilization": "60000001",
+          "stateHash": "0xf7185a0001933e757aeb3facc0eb10387bd7682552e4c04d5bd0cf39e3090063",
+          "stateVersion": "3",
+          "policyVersion": "1"
+        }
+      },
+      "verifiedAt": "2026-09-06T02:00:20.022Z"
+    }
   }
 }

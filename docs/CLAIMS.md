@@ -13,3 +13,4 @@
 | The policy derives gold value or collateral rights | FALSE / OUT OF SCOPE | Gold quantity and price are not policy inputs; `assetId` is a demo reference label only. |
 | An allowed decision reserves capacity by itself | FALSE | `evaluate` is read-only; only a successful version-checked `commitCredit` changes `committedCredit`. |
 | Competing commitments can reuse one observed headroom | REJECTED (local T11) | The first successful commitment increments `stateVersion`; a second request carrying the same version reverts. |
+| The full proof-to-state-to-policy path runs on public testnets | VERIFIED (T12) | Public Sepolia open/repay events were proven and applied on the canonical CC3 gate, followed by a successful version-checked commit30 transaction. |
