@@ -18,13 +18,20 @@ function destinationConstructorArgs({ manifest, verifier, decoder }) {
   ];
 }
 
-function submissionRecord({ txHash, blockNumber, status, state }) {
+function submissionRecord({ txHash, blockNumber, status, state, expected = {} }) {
   if (Number(status) !== 1) throw new Error('CC3 submission receipt failed');
   const [initialized, principal, repaid, debt, sequence, sourceBlock, txIndex, stateVersion] = state;
-  if (
-    !initialized || principal !== 50_000_000n || repaid !== 0n || debt !== 50_000_000n ||
-    sequence !== 1n || sourceBlock !== 11_643_709n || txIndex !== 80n || stateVersion !== 1n
-  ) throw new Error('CC3 stored state does not match T07 acceptance');
+  const target = {
+    repaid: expected.repaid ?? 0n,
+    debt: expected.debt ?? 50_000_000n,
+    sequence: expected.sequence ?? 1n,
+    sourceBlock: expected.sourceBlock ?? 11_643_709n,
+    txIndex: expected.txIndex ?? 80n,
+    stateVersion: expected.stateVersion ?? 1n,
+  };
+  if (!initialized || principal !== 50_000_000n || repaid !== target.repaid || debt !== target.debt || sequence !== target.sequence || sourceBlock !== target.sourceBlock || txIndex !== target.txIndex || stateVersion !== target.stateVersion) {
+    throw new Error('CC3 stored state does not match expected acceptance state');
+  }
   return {
     transactionHash: txHash,
     blockNumber,

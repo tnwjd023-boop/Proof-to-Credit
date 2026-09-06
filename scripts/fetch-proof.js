@@ -4,7 +4,7 @@ const fs = require('node:fs');
 const path = require('node:path');
 const { Contract, FetchRequest, JsonRpcProvider } = require('ethers');
 const { networkConfig } = require('../src/config');
-const { fetchProof, normalizeProof, verifierArgs } = require('../src/proof-client');
+const { fetchProof, resumableProof, selectProofTarget, verifierArgs } = require('../src/proof-client');
 
 const MERKLE = '(bytes32 root,(bytes32 hash,bool isLeft)[] siblings)';
 const CONTINUITY = '(bytes32 lowerEndpointDigest,bytes32[] roots)';
@@ -49,7 +49,8 @@ async function main() {
   }
   const runDirectory = path.join(__dirname, '..', 'runs', id);
   const manifest = JSON.parse(fs.readFileSync(path.join(runDirectory, 'manifest.json'), 'utf8'));
-  if (manifest.opening?.transactionHash.toLowerCase() !== txHash.toLowerCase()) throw new Error('transaction does not match run opening');
+  const target = selectProofTarget(manifest, txHash);
+  const refresh = process.argv.includes('--refresh');
   const source = provider(networkConfig.source.rpcUrl);
   const cc3 = provider(networkConfig.destination.rpcUrl);
   try {
@@ -59,17 +60,18 @@ async function main() {
       source.getTransactionReceipt(txHash),
     ]);
     if (sourceNetwork.chainId !== 11155111n || destinationNetwork.chainId !== 102031n) throw new Error('testnet chainId mismatch');
-    if (!receipt || receipt.status !== 1 || receipt.blockNumber !== manifest.opening.blockNumber) throw new Error('source receipt position mismatch');
+    if (!receipt || receipt.status !== 1 || receipt.blockNumber !== target.record.blockNumber) throw new Error('source receipt position mismatch');
     const proofsDirectory = path.join(runDirectory, 'proofs');
-    const proofPath = path.join(proofsDirectory, 'debt-opened.json');
+    const proofPath = path.join(proofsDirectory, `${target.kind}.json`);
     let proof;
     if (fs.existsSync(proofPath)) {
-      proof = normalizeProof(JSON.parse(fs.readFileSync(proofPath, 'utf8')).bundle, {
+      proof = resumableProof(JSON.parse(fs.readFileSync(proofPath, 'utf8')).bundle, {
         chainKey: 1n,
         headerNumber: BigInt(receipt.blockNumber),
-      });
-      console.log('Resuming from saved proof bundle');
-    } else {
+      }, refresh);
+      if (proof) console.log('Resuming from saved proof bundle');
+    }
+    if (!proof) {
       proof = await fetchProof({
         baseUrl: networkConfig.proofApiUrl,
         chainKey: 1n,

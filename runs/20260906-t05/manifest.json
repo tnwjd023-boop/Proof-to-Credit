@@ -60,5 +60,69 @@
       "lastTxIndex": "80",
       "stateVersion": "1"
     }
+  },
+  "repayment": {
+    "transactionHash": "0x326c666d0208e6f1625396a559cb78bb4e7783c56eda52c11643e7339cba0687",
+    "blockNumber": 11643980,
+    "sequence": "2",
+    "amount": "20000000",
+    "cumulativeRepaid": "20000000",
+    "outstanding": "30000000",
+    "sourceTimestamp": "1788656832",
+    "confirmedState": {
+      "opened": true,
+      "principalOpened": "50000000",
+      "totalRepaid": "20000000",
+      "outstanding": "30000000",
+      "sequence": "2"
+    }
+  },
+  "destinationT09": {
+    "network": "Creditcoin CC3 Testnet",
+    "chainId": "102031",
+    "verifier": "0x0000000000000000000000000000000000000FD2",
+    "decoder": {
+      "address": "0x499651Aa184D1c43bD2C52E00831E30fE95Cd8c9",
+      "deploymentTransactionHash": "0xc142b172f1676b1416c1facc8063c57b1707f1925b45fe6e6b3913aa7d10dc1c",
+      "blockNumber": 5437843,
+      "codeHash": "0x6af1caad44e16d0090d318227b4a6feedc490e6c63399dcc642018d9968dc38d",
+      "codeBytes": 10272
+    },
+    "gate": {
+      "address": "0x9c3b41eecAB34ab5089675C1a5Ab38C43f4E7A51",
+      "deploymentTransactionHash": "0xdffbae3f924d5a00b922a85e9ec7d1d5af766eb17f0bf03c04b3d6871a7c52c2",
+      "blockNumber": 5437844,
+      "codeHash": "0x993b3120a4ca24a3785bfe45ad25f6024568175ff49505a7f4c3f94c5a4b8dd8",
+      "codeBytes": 5777
+    },
+    "initialCreditLimit": "60000000",
+    "submissions": {
+      "debt-opened": {
+        "transactionHash": "0x3f1906482b0775641b9c384ea04ce3f369a462b73bf05b512089c92728b1bbf8",
+        "blockNumber": 5437878,
+        "receiptStatus": 1,
+        "initialized": true,
+        "principalOpened": "50000000",
+        "totalRepaid": "0",
+        "verifiedDebt": "50000000",
+        "lastSequence": "1",
+        "lastSourceBlock": "11643709",
+        "lastTxIndex": "80",
+        "stateVersion": "1"
+      },
+      "debt-repaid": {
+        "transactionHash": "0x56c78561186d8deb5cc7d96a19a91026e73e1902f1f0647953ca70be15fa28f1",
+        "blockNumber": 5437881,
+        "receiptStatus": 1,
+        "initialized": true,
+        "principalOpened": "50000000",
+        "totalRepaid": "20000000",
+        "verifiedDebt": "30000000",
+        "lastSequence": "2",
+        "lastSourceBlock": "11643980",
+        "lastTxIndex": "77",
+        "stateVersion": "2"
+      }
+    }
   }
 }

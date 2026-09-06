@@ -14,6 +14,11 @@ function runId() {
   return value;
 }
 
+function option(name) {
+  const index = process.argv.indexOf(name);
+  return index >= 0 ? process.argv[index + 1] : undefined;
+}
+
 async function deployChecked(factory, args, provider) {
   const contract = await factory.deploy(...args);
   const transaction = contract.deploymentTransaction();
@@ -28,9 +33,11 @@ async function deployChecked(factory, args, provider) {
 async function main() {
   require('dotenv').config({ quiet: true });
   const id = runId();
+  const slot = option('--slot') || 'destination';
+  if (!/^destination[A-Za-z0-9]*$/.test(slot)) throw new Error('Invalid destination --slot');
   const manifestPath = path.join(__dirname, '..', 'runs', id, 'manifest.json');
   const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  if (manifest.destination) throw new Error('destination already exists for this run');
+  if (manifest[slot]) throw new Error(`${slot} already exists for this run`);
   const provider = new JsonRpcProvider(networkConfig.destination.rpcUrl);
   try {
     const network = await provider.getNetwork();
@@ -41,7 +48,7 @@ async function main() {
     const decoder = await deployChecked(new ContractFactory(artifacts.EvmV1Decoder.abi, artifacts.EvmV1Decoder.bytecode, signer), [], provider);
     const gateArgs = destinationConstructorArgs({ manifest, verifier: networkConfig.destination.blockProver, decoder: decoder.address });
     const gate = await deployChecked(new ContractFactory(artifacts.VerifiedDebtGate.abi, artifacts.VerifiedDebtGate.bytecode, signer), gateArgs, provider);
-    manifest.destination = {
+    manifest[slot] = {
       network: 'Creditcoin CC3 Testnet',
       chainId: network.chainId.toString(),
       verifier: networkConfig.destination.blockProver,
@@ -50,7 +57,7 @@ async function main() {
       initialCreditLimit: '60000000',
     };
     fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-    console.log(JSON.stringify(manifest.destination, null, 2));
+    console.log(JSON.stringify(manifest[slot], null, 2));
   } finally {
     provider.destroy();
   }

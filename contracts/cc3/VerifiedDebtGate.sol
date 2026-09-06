@@ -13,6 +13,9 @@ contract VerifiedDebtGate {
     error AlreadyInitialized();
     error InvalidOpening();
     error OutOfOrderSourcePosition();
+    error MissingOpening();
+    error InvalidSequence(uint64 supplied, uint64 expected);
+    error InvalidRepayment();
 
     event SourceEventApplied(
         bytes32 indexed eventId,
@@ -29,6 +32,9 @@ contract VerifiedDebtGate {
 
     bytes32 private constant DEBT_OPENED_SIGNATURE = keccak256(
         "DebtOpened(bytes32,bytes32,address,bytes32,uint64,uint256,uint256,uint64)"
+    );
+    bytes32 private constant DEBT_REPAID_SIGNATURE = keccak256(
+        "DebtRepaid(bytes32,bytes32,address,bytes32,uint64,uint256,uint256,uint256,uint64)"
     );
 
     INativeQueryVerifier public immutable verifier;
@@ -105,7 +111,7 @@ contract VerifiedDebtGate {
             if (
                 entry.address_ != sourceEmitter ||
                 entry.topics.length != 4 ||
-                entry.topics[0] != DEBT_OPENED_SIGNATURE
+                (entry.topics[0] != DEBT_OPENED_SIGNATURE && entry.topics[0] != DEBT_REPAID_SIGNATURE)
             ) continue;
             if (
                 initialized &&
@@ -118,11 +124,76 @@ contract VerifiedDebtGate {
                     lastLogIndex
                 )
             ) revert OutOfOrderSourcePosition();
-            _applyOpening(queryId, blockHeight, txIndex, i, entry);
-            appliedLogCount = 1;
+            if (entry.topics[0] == DEBT_OPENED_SIGNATURE) {
+                _applyOpening(queryId, blockHeight, txIndex, i, entry);
+            } else {
+                _applyRepayment(queryId, blockHeight, txIndex, i, entry);
+            }
+            appliedLogCount += 1;
         }
         if (appliedLogCount == 0) revert NoApplicableLog();
         processedQueries[queryId] = true;
+    }
+
+    function _applyRepayment(
+        bytes32 queryId,
+        uint64 blockHeight,
+        uint64 txIndex,
+        uint64 logIndex,
+        IEvmDecoder.LogEntry memory entry
+    ) private {
+        if (!initialized) revert MissingOpening();
+        if (
+            entry.topics[1] != assetId ||
+            entry.topics[2] != loanId ||
+            address(uint160(uint256(entry.topics[3]))) != borrower
+        ) revert InvalidRepayment();
+        (
+            bytes32 eventUnitId,
+            uint64 sequence,
+            uint256 amount,
+            uint256 cumulativeRepaid,
+            uint256 outstanding,
+            uint64 sourceTimestamp
+        ) = abi.decode(entry.data, (bytes32, uint64, uint256, uint256, uint256, uint64));
+        uint64 expectedSequence = lastSequence + 1;
+        if (sequence != expectedSequence) revert InvalidSequence(sequence, expectedSequence);
+        if (
+            eventUnitId != unitId ||
+            amount == 0 ||
+            amount > verifiedDebt ||
+            cumulativeRepaid != totalRepaid + amount ||
+            cumulativeRepaid > principalOpened ||
+            outstanding != principalOpened - cumulativeRepaid ||
+            outstanding != verifiedDebt - amount ||
+            sourceTimestamp < lastSourceTimestamp
+        ) revert InvalidRepayment();
+
+        totalRepaid = cumulativeRepaid;
+        verifiedDebt = outstanding;
+        lastSequence = sequence;
+        _recordAppliedPosition(queryId, blockHeight, txIndex, logIndex, sourceTimestamp);
+    }
+
+    function _recordAppliedPosition(
+        bytes32 queryId,
+        uint64 blockHeight,
+        uint64 txIndex,
+        uint64 logIndex,
+        uint64 sourceTimestamp
+    ) private {
+        bytes32 eventId = keccak256(abi.encode(queryId, logIndex));
+        lastSourceBlock = blockHeight;
+        lastTxIndex = txIndex;
+        lastLogIndex = logIndex;
+        lastSourceTimestamp = sourceTimestamp;
+        lastAdmittedAt = uint64(block.timestamp);
+        stateVersion += 1;
+        lastEventId = eventId;
+        emit SourceEventApplied(
+            eventId, queryId, blockHeight, txIndex, logIndex, loanId,
+            lastSequence, verifiedDebt, totalRepaid, stateVersion
+        );
     }
 
     function _applyOpening(
@@ -144,30 +215,11 @@ contract VerifiedDebtGate {
             revert InvalidOpening();
         }
 
-        bytes32 eventId = keccak256(abi.encode(queryId, logIndex));
         initialized = true;
         principalOpened = principal;
         verifiedDebt = outstanding;
         lastSequence = sequence;
-        lastSourceBlock = blockHeight;
-        lastTxIndex = txIndex;
-        lastLogIndex = logIndex;
-        lastSourceTimestamp = sourceTimestamp;
-        lastAdmittedAt = uint64(block.timestamp);
-        stateVersion = 1;
-        lastEventId = eventId;
-        emit SourceEventApplied(
-            eventId,
-            queryId,
-            blockHeight,
-            txIndex,
-            logIndex,
-            loanId,
-            sequence,
-            verifiedDebt,
-            totalRepaid,
-            stateVersion
-        );
+        _recordAppliedPosition(queryId, blockHeight, txIndex, logIndex, sourceTimestamp);
     }
 
     function getState()

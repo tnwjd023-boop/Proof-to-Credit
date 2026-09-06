@@ -25,3 +25,13 @@ The admission path fixes verifier, decoder, source chain key, source emitter, as
 After the successful write, read-only calls rejected the same query (`AlreadyProcessed`), wrong source chain (`WrongSourceChain`), and a mutated Merkle root. Local VM tests additionally cover a verifier false result and an otherwise valid event from a non-allowlisted emitter.
 
 T08 adds strict `(blockHeight, txIndex, logIndex)` ordering and binds query/event IDs to the verifier-derived transaction index and decoded receipt log index. These changes are locally verified source for the next deployment; the T07 address above remains the immutable T07 build and is not claimed to contain later code.
+
+## T09 repayment deployment
+
+- Decoder: `0x499651Aa184D1c43bD2C52E00831E30fE95Cd8c9`
+- VerifiedDebtGate: `0x9c3b41eecAB34ab5089675C1a5Ab38C43f4E7A51`
+- Opening submission: `0x3f1906482b0775641b9c384ea04ce3f369a462b73bf05b512089c92728b1bbf8`
+- Repayment submission: `0x56c78561186d8deb5cc7d96a19a91026e73e1902f1f0647953ca70be15fa28f1`
+- Final verified state: principal `50,000,000`, repaid `20,000,000`, debt `30,000,000`, sequence/state version `2`
+
+This T09 deployment includes the T08 ordering rules and T09 repayment reconstruction. Earlier deployment addresses remain immutable historical evidence and are not aliases for this contract.

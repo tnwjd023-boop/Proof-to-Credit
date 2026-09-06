@@ -88,4 +88,15 @@ async function fetchProof(options) {
   }
 }
 
-module.exports = { POLL_INTERVAL_MS, TIMEOUT_MS, fetchProof, normalizeProof, verifierArgs };
+function selectProofTarget(manifest, txHash) {
+  const supplied = txHash.toLowerCase();
+  if (manifest.opening?.transactionHash.toLowerCase() === supplied) return { kind: 'debt-opened', record: manifest.opening };
+  if (manifest.repayment?.transactionHash.toLowerCase() === supplied) return { kind: 'debt-repaid', record: manifest.repayment };
+  throw new Error('transaction does not match opening or repayment in run manifest');
+}
+
+function resumableProof(savedBundle, expected, refresh) {
+  return refresh ? null : normalizeProof(savedBundle, expected);
+}
+
+module.exports = { POLL_INTERVAL_MS, TIMEOUT_MS, fetchProof, normalizeProof, resumableProof, selectProofTarget, verifierArgs };

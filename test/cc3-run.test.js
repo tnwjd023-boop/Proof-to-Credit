@@ -36,3 +36,15 @@ test('submission record requires successful initialized debt50 state', () => {
   assert.equal(record.stateVersion, '1');
   assert.throws(() => submissionRecord({ txHash: '0x', blockNumber: 7, status: 0, state: [] }), /receipt/);
 });
+
+test('submission record validates the expected repayment state', () => {
+  const record = submissionRecord({
+    txHash: `0x${'cd'.repeat(32)}`,
+    blockNumber: 8,
+    status: 1,
+    state: [true, 50_000_000n, 20_000_000n, 30_000_000n, 2n, 11_643_980n, 77n, 2n],
+    expected: { repaid: 20_000_000n, debt: 30_000_000n, sequence: 2n, sourceBlock: 11_643_980n, txIndex: 77n, stateVersion: 2n },
+  });
+  assert.equal(record.totalRepaid, '20000000');
+  assert.equal(record.verifiedDebt, '30000000');
+});

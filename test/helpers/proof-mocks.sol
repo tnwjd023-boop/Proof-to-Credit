@@ -34,7 +34,11 @@ contract TestOnlyVerifierMock {
         return verdict;
     }
 
-    function calculateTxIndex(INativeQueryVerifier.MerkleProof calldata) external pure returns (uint64) {
-        return 80;
+    function calculateTxIndex(INativeQueryVerifier.MerkleProof calldata merkleProof) external pure returns (uint64) {
+        uint64 index;
+        for (uint256 i; i < 64 && i < merkleProof.siblings.length; ++i) {
+            if (merkleProof.siblings[i].isLeft) index |= uint64(uint256(1) << i);
+        }
+        return index;
     }
 }

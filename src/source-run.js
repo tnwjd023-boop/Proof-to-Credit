@@ -62,6 +62,34 @@ function openingRecord({ receipt, contractAddress, borrower, iface }) {
   throw new Error('matching DebtOpened event not found');
 }
 
+function repaymentRecord({ receipt, contractAddress, borrower, loanId, iface }) {
+  if (Number(receipt.status) !== 1) throw new Error('DebtRepaid transaction receipt failed');
+  const target = getAddress(contractAddress);
+  for (const log of receipt.logs) {
+    if (getAddress(log.address) !== target) continue;
+    let parsed;
+    try { parsed = iface.parseLog(log); } catch { continue; }
+    if (parsed?.name !== 'DebtRepaid') continue;
+    const args = parsed.args;
+    if (
+      args.assetId !== SOURCE_ASSET_ID || args.loanId !== loanId ||
+      getAddress(args.borrower) !== getAddress(borrower) || args.unitId !== SOURCE_UNIT_ID ||
+      args.sequence !== 2n || args.amount !== 20_000_000n ||
+      args.cumulativeRepaid !== 20_000_000n || args.outstanding !== 30_000_000n
+    ) throw new Error('DebtRepaid event does not match the fixed T09 scope');
+    return {
+      transactionHash: receipt.hash,
+      blockNumber: receipt.blockNumber,
+      sequence: args.sequence.toString(),
+      amount: args.amount.toString(),
+      cumulativeRepaid: args.cumulativeRepaid.toString(),
+      outstanding: args.outstanding.toString(),
+      sourceTimestamp: args.sourceTimestamp.toString(),
+    };
+  }
+  throw new Error('matching DebtRepaid event not found');
+}
+
 module.exports = {
   OPEN_AMOUNT,
   SOURCE_ASSET_ID,
@@ -69,4 +97,5 @@ module.exports = {
   SOURCE_UNIT_ID,
   deploymentRecord,
   openingRecord,
+  repaymentRecord,
 };

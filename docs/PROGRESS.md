@@ -117,3 +117,14 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - A successful query is marked processed only after all matching logs have been applied. Any invalid matching log reverts the transaction, so partial state and processed markers roll back together.
 - Replay fails without increasing `stateVersion`; a failed batch leaves its query unprocessed so the same source transaction can be retried after the missing prerequisite is accepted.
 - TDD RED: compilation failed because `contracts/cc3/SourcePosition.sol` did not exist. GREEN: `test/sequence.test.js` passed 3/3 and the T07 admission suite remained green.
+
+## T09 — Repayment and principal reconstruction
+
+- Status: **DONE — PUBLIC SEPOLIA AND CC3 TESTNET EVIDENCE**.
+- Sepolia `repayDebt(20,000,000)` transaction: `0x326c666d0208e6f1625396a559cb78bb4e7783c56eda52c11643e7339cba0687`; block `11643980`; event/getters agree on cumulative repayment `20,000,000`, outstanding `30,000,000`, sequence `2`.
+- Attestcoin proof: `runs/20260906-t05/proofs/debt-repaid.json`; chain key `1`, source tx index `77`; normal CC3 runtime verification true with Merkle and continuity tamper controls rejected.
+- A stale saved opening continuity path was correctly rejected before transaction broadcast. Diagnosis showed the Merkle root unchanged while continuity roots advanced from 2 to 92. The worker now supports explicit `--refresh`, backed by a regression test, and both proofs were refreshed before submission.
+- T09 decoder: `0x499651Aa184D1c43bD2C52E00831E30fE95Cd8c9`; gate: `0x9c3b41eecAB34ab5089675C1a5Ab38C43f4E7A51`.
+- Opening proof submission: `0x3f1906482b0775641b9c384ea04ce3f369a462b73bf05b512089c92728b1bbf8`; repayment proof submission: `0x56c78561186d8deb5cc7d96a19a91026e73e1902f1f0647953ca70be15fa28f1`.
+- Final CC3 state: initialized, principal `50,000,000`, cumulative repayment `20,000,000`, verified debt `30,000,000`, sequence `2`, source block `11643980`, source tx index `77`, state version `2`.
+- Local negative tests reject repayment before opening, sequence gaps, wrong unit, zero/over repayment, inconsistent cumulative repayment, and inconsistent outstanding amount without state residue.

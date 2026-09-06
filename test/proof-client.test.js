@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { fetchProof, normalizeProof, verifierArgs } = require('../src/proof-client');
+const { fetchProof, normalizeProof, resumableProof, selectProofTarget, verifierArgs } = require('../src/proof-client');
 
 const hash = (byte) => `0x${byte.repeat(64)}`;
 const txHash = hash('a');
@@ -72,4 +72,19 @@ test('stops after the 30 minute attestation timeout', async () => {
     }),
     /30 minute timeout/,
   );
+});
+
+test('selects the opening or repayment manifest record by transaction hash', () => {
+  const opening = { transactionHash: hash('b'), blockNumber: 10 };
+  const repayment = { transactionHash: hash('c'), blockNumber: 20 };
+  assert.deepEqual(selectProofTarget({ opening, repayment }, repayment.transactionHash), {
+    kind: 'debt-repaid',
+    record: repayment,
+  });
+  assert.throws(() => selectProofTarget({ opening, repayment }, hash('d')), /does not match/);
+});
+
+test('refresh bypasses a saved proof whose continuity path may have expired', () => {
+  assert.equal(resumableProof(valid, { chainKey: 1n }, true), null);
+  assert.equal(resumableProof(valid, { chainKey: 1n }, false).chainKey, '1');
 });

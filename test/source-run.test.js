@@ -9,6 +9,7 @@ const {
   SOURCE_UNIT_ID,
   deploymentRecord,
   openingRecord,
+  repaymentRecord,
 } = require('../src/source-run');
 
 const address = '0x1000000000000000000000000000000000000001';
@@ -20,6 +21,26 @@ test('source constants fix the documented identity and six-decimal open50 amount
   assert.equal(SOURCE_ASSET_ID, keccak256(toUtf8Bytes('DEMO_GOLD_REFERENCE_001')));
   assert.equal(SOURCE_UNIT_ID, keccak256(toUtf8Bytes('DEMO_USD_6')));
   assert.equal(OPEN_AMOUNT, 50_000_000n);
+});
+
+test('repayment record accepts only a matching repay20 event and debt30 state', () => {
+  const iface = new Interface([
+    'event DebtRepaid(bytes32 indexed assetId,bytes32 indexed loanId,address indexed borrower,bytes32 unitId,uint64 sequence,uint256 amount,uint256 cumulativeRepaid,uint256 outstanding,uint64 sourceTimestamp)',
+  ]);
+  const loanId = `0x${'12'.repeat(32)}`;
+  const event = iface.encodeEventLog(iface.getEvent('DebtRepaid'), [
+    SOURCE_ASSET_ID, loanId, address, SOURCE_UNIT_ID, 2n, 20_000_000n, 20_000_000n, 30_000_000n, 124n,
+  ]);
+  const record = repaymentRecord({
+    receipt: { status: 1, hash: txHash, blockNumber: 43, logs: [{ address: contractAddress, ...event }] },
+    contractAddress,
+    borrower: address,
+    loanId,
+    iface,
+  });
+  assert.equal(record.amount, '20000000');
+  assert.equal(record.outstanding, '30000000');
+  assert.equal(record.sequence, '2');
 });
 
 test('deployment record rejects the wrong network or bytecode', () => {
