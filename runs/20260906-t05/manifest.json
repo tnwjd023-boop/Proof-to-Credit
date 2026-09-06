@@ -27,5 +27,38 @@
       "outstanding": "50000000",
       "sequence": "1"
     }
+  },
+  "destination": {
+    "network": "Creditcoin CC3 Testnet",
+    "chainId": "102031",
+    "verifier": "0x0000000000000000000000000000000000000FD2",
+    "decoder": {
+      "address": "0x0c93759f8eC91B348D8C53EA03C1ae78ED543760",
+      "deploymentTransactionHash": "0x8eb7f7b96e5165c799488586ba4dd793c06b834fdeee8b977e01b2396f3370d5",
+      "blockNumber": 5437637,
+      "codeHash": "0x6af1caad44e16d0090d318227b4a6feedc490e6c63399dcc642018d9968dc38d",
+      "codeBytes": 10272
+    },
+    "gate": {
+      "address": "0xf2BBE3B025Cc5733fD821D4E6BbE2ba0Cee714Fa",
+      "deploymentTransactionHash": "0xe1aafce1b613e31634d4df8b4bd0fad1ae4bef83a208133a9228ed58db7ed168",
+      "blockNumber": 5437638,
+      "codeHash": "0x93cd0be4bcd201e5a152c91f5341fcbf4411f71e1741b9f60bc2b74621828802",
+      "codeBytes": 4689
+    },
+    "initialCreditLimit": "60000000",
+    "submission": {
+      "transactionHash": "0xd3ca305c5dc56048f6b15de1b4f3247d117c34ff72fe07be3d6e17ed870dc5d9",
+      "blockNumber": 5437680,
+      "receiptStatus": 1,
+      "initialized": true,
+      "principalOpened": "50000000",
+      "totalRepaid": "0",
+      "verifiedDebt": "50000000",
+      "lastSequence": "1",
+      "lastSourceBlock": "11643709",
+      "lastTxIndex": "80",
+      "stateVersion": "1"
+    }
   }
 }

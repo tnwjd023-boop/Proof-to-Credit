@@ -6,6 +6,8 @@
   "type": "commonjs",
   "scripts": {
     "check-env": "node scripts/check-env.js",
+    "cc3:deploy": "node scripts/deploy-cc3.js",
+    "cc3:submit": "node scripts/submit-proof.js",
     "compile": "node scripts/compile.js",
     "proof:fetch": "node scripts/fetch-proof.js",
     "probe": "node scripts/probe-proof.js",

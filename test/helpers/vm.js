@@ -99,4 +99,43 @@ async function deployContract(contractName, constructorArgs, { caller }) {
   };
 }
 
-module.exports = { deployContract, loadArtifact, replaceFirstWord, runPureLibrary };
+async function createVmHarness({ caller }) {
+  const common = new Common({ chain: Chain.Sepolia, hardfork: Hardfork.Paris });
+  const vm = await VM.create({ common });
+
+  async function deploy(contractName, constructorArgs, { caller: deployer = caller } = {}) {
+    const artifact = loadArtifact(contractName);
+    const iface = new Interface(artifact.abi);
+    const deployment = await vm.evm.runCall({
+      caller: Address.fromString(deployer),
+      data: hexToBytes(concat([artifact.bytecode, iface.encodeDeploy(constructorArgs)])),
+      gasLimit: 30_000_000n,
+    });
+    if (deployment.execResult.exceptionError || !deployment.createdAddress) throw revertError(iface, deployment.execResult);
+    const contractAddress = deployment.createdAddress;
+
+    async function execute(functionName, args, { caller: callFrom = caller, isStatic = false } = {}) {
+      const call = await vm.evm.runCall({
+        caller: Address.fromString(callFrom),
+        to: contractAddress,
+        data: hexToBytes(iface.encodeFunctionData(functionName, args)),
+        gasLimit: 30_000_000n,
+        isStatic,
+      });
+      const result = call.execResult;
+      if (result.exceptionError) throw revertError(iface, result);
+      return { result: iface.decodeFunctionResult(functionName, result.returnValue), events: parsedEvents(iface, result.logs) };
+    }
+
+    return {
+      address: getAddress(contractAddress.toString()),
+      read: async (name, args = []) => (await execute(name, args, { isStatic: true })).result,
+      readOne: async (name, args = []) => (await execute(name, args, { isStatic: true })).result[0],
+      write: (name, args, options = {}) => execute(name, args, options),
+    };
+  }
+
+  return { deploy };
+}
+
+module.exports = { createVmHarness, deployContract, loadArtifact, replaceFirstWord, runPureLibrary };
