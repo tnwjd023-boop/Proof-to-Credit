@@ -1,5 +1,7 @@
 # Proof-to-Credit
 
+[![CI](https://github.com/tnwjd023-boop/Proof-to-Credit/actions/workflows/ci.yml/badge.svg)](https://github.com/tnwjd023-boop/Proof-to-Credit/actions/workflows/ci.yml)
+
 Proof-to-Credit is a testnet reference implementation of a narrow pipeline:
 
 ```text
