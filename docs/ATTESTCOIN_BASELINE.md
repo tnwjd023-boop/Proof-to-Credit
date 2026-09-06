@@ -4,6 +4,8 @@ Current status: **VERIFIED** by direct runtime execution on `2026-09-05T22:49:17
 
 The probe records health, source head, attested height, selected public Sepolia transaction, proof position, on-chain `calculateTxIndex`, normal verification, and independent root/continuity tamper controls under `runs/probe/`.
 
+T06 extends that read-only spike with our own T05 `DebtOpened` transaction. Its persisted proof is `runs/20260906-t05/proofs/debt-opened.json`: source block `11643709`, transaction index `80`, normal CC3 runtime verdict `true`, with both Merkle-root and continuity-endpoint negative controls rejected.
+
 ABI provenance:
 
 - `verify`, `verifyAndEmit`, and `calculateTxIndex` follow the Creditcoin USC v2 migration documentation and the fixed reference revision.

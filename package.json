@@ -7,6 +7,7 @@
   "scripts": {
     "check-env": "node scripts/check-env.js",
     "compile": "node scripts/compile.js",
+    "proof:fetch": "node scripts/fetch-proof.js",
     "probe": "node scripts/probe-proof.js",
     "source:deploy": "node scripts/deploy-source.js",
     "source:open": "node scripts/source-actions.js open --amount 50",

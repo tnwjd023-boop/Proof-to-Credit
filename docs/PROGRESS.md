@@ -88,3 +88,13 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - `DebtOpened` and getters agree: loan ID `0xf75242025a45e9d02bdb54af3e4b5c791fcd9c92704f3cd8d6ef558dc632dc2c`, sequence `1`, principal/outstanding `50,000,000`, cumulative repayment `0`.
 - Immutable scope: borrower `0x122409763443d94060fAc61676d50c0B1006f49F`, asset ID `0x4ac423f580111ce6c4fe187d4113c368aab45204509f55000ec90d4eb77a23e7`, unit ID `0xf013d3d74e873543dc0fbc4db2cda2753bb12e048dba74e108de8bf217543310`.
 - No token or real funds were lent. The contract records mock principal only; Sepolia ETH paid testnet gas.
+
+## T06 — Worker proof fetch, persistence, and conversion
+
+- Status: **DONE — ACTUAL ATTESTCOIN PROOF VERIFIED**.
+- Input: T05 `DebtOpened` transaction `0xa5c0954a0b148e84d37c68a87fc9d37d77c548f1aed4d522ee0c9009f92042cd`, Sepolia block `11643709`, transaction index `80`, expected chain key `1`.
+- The worker observed the documented 32-block reorg-protection window, then waited through `retriable=true` HTTP 404/422 responses at 15-second intervals until the block was attested. Total live execution time was about four minutes, below the 30-minute limit.
+- Stored lossless proof bundle and flattened verifier fields: `runs/20260906-t05/proofs/debt-opened.json`. All integer fields are decimal strings to avoid JSON number loss.
+- Source receipt cross-check: proof header `11643709` and tx index `80` match the successful Sepolia receipt; proof chain key is `1`.
+- CC3 BlockProver runtime verification: derived index `80`; normal `verify=true`; mutated Merkle root rejected; mutated continuity endpoint rejected.
+- Classification requires all source-position and runtime checks. An API success response alone does not produce `VERIFIED`.
