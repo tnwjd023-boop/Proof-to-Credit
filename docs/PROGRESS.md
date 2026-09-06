@@ -108,3 +108,12 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - Proof submission transaction: `0xd3ca305c5dc56048f6b15de1b4f3247d117c34ff72fe07be3d6e17ed870dc5d9`; receipt status `1`; CC3 block `5437680`.
 - Stored state: `initialized=true`, principal/verified debt `50,000,000`, total repaid `0`, sequence `1`, source block `11643709`, source tx index `80`, state version `1`.
 - Independent read-only checks rejected replay as `AlreadyProcessed`, chain key `2` as `WrongSourceChain`, and a mutated Merkle root. Local VM tests also reject failed verifier and non-allowlisted emitter without state mutation.
+
+## T08 — Sequence, position, and transaction replay safety
+
+- Status: **DONE — LOCAL SECURITY INVARIANTS**. No replacement CC3 deployment was made in this task.
+- Query identity is `keccak256(abi.encode(chainKey, blockHeight, verifiedTxIndex))`; event identity adds the receipt `logIndex`.
+- Source positions use strict lexicographic ordering over `(blockHeight, txIndex, logIndex)`, including explicit same-block and same-transaction vectors.
+- A successful query is marked processed only after all matching logs have been applied. Any invalid matching log reverts the transaction, so partial state and processed markers roll back together.
+- Replay fails without increasing `stateVersion`; a failed batch leaves its query unprocessed so the same source transaction can be retried after the missing prerequisite is accepted.
+- TDD RED: compilation failed because `contracts/cc3/SourcePosition.sol` did not exist. GREEN: `test/sequence.test.js` passed 3/3 and the T07 admission suite remained green.

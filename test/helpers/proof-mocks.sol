@@ -2,6 +2,20 @@
 pragma solidity ^0.8.36;
 
 import "../../contracts/interfaces/INativeQueryVerifier.sol";
+import "../../contracts/cc3/SourcePosition.sol";
+
+contract TestOnlyPositionHarness {
+    function isAfter(
+        uint64 blockNumber,
+        uint64 txIndex,
+        uint64 logIndex,
+        uint64 previousBlock,
+        uint64 previousTx,
+        uint64 previousLog
+    ) external pure returns (bool) {
+        return SourcePosition.isAfter(blockNumber, txIndex, logIndex, previousBlock, previousTx, previousLog);
+    }
+}
 
 contract TestOnlyVerifierMock {
     bool private immutable verdict;

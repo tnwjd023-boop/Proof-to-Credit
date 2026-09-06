@@ -23,3 +23,5 @@ The admission path fixes verifier, decoder, source chain key, source emitter, as
 ## Negative controls
 
 After the successful write, read-only calls rejected the same query (`AlreadyProcessed`), wrong source chain (`WrongSourceChain`), and a mutated Merkle root. Local VM tests additionally cover a verifier false result and an otherwise valid event from a non-allowlisted emitter.
+
+T08 adds strict `(blockHeight, txIndex, logIndex)` ordering and binds query/event IDs to the verifier-derived transaction index and decoded receipt log index. These changes are locally verified source for the next deployment; the T07 address above remains the immutable T07 build and is not claimed to contain later code.

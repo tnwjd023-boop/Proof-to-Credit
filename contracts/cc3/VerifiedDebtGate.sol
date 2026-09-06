@@ -3,6 +3,7 @@ pragma solidity ^0.8.36;
 
 import "../interfaces/INativeQueryVerifier.sol";
 import "../interfaces/IEvmDecoder.sol";
+import "./SourcePosition.sol";
 
 contract VerifiedDebtGate {
     error WrongSourceChain(uint64 supplied, uint64 expected);
@@ -11,6 +12,7 @@ contract VerifiedDebtGate {
     error NoApplicableLog();
     error AlreadyInitialized();
     error InvalidOpening();
+    error OutOfOrderSourcePosition();
 
     event SourceEventApplied(
         bytes32 indexed eventId,
@@ -105,6 +107,17 @@ contract VerifiedDebtGate {
                 entry.topics.length != 4 ||
                 entry.topics[0] != DEBT_OPENED_SIGNATURE
             ) continue;
+            if (
+                initialized &&
+                !SourcePosition.isAfter(
+                    blockHeight,
+                    txIndex,
+                    i,
+                    lastSourceBlock,
+                    lastTxIndex,
+                    lastLogIndex
+                )
+            ) revert OutOfOrderSourcePosition();
             _applyOpening(queryId, blockHeight, txIndex, i, entry);
             appliedLogCount = 1;
         }
