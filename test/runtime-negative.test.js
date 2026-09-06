@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { buildTamperedProofs, contractErrorName, evidenceClock } = require('../src/runtime-negative');
+const { buildTamperedProofs, contractErrorName, evidenceClock, runtimeProofVerdict } = require('../src/runtime-negative');
 
 const hash = (byte) => `0x${byte.repeat(64)}`;
 
@@ -42,4 +42,24 @@ test('captures evidence start before completion using an injected clock', () => 
   const clock = evidenceClock(() => values.shift());
   assert.equal(clock.startedAt, '2026-09-06T06:00:00.000Z');
   assert.equal(clock.completedAt(), '2026-09-06T06:00:03.000Z');
+});
+
+test('runtime proof verdict uses verify first and read-only fallback without broadcasting', async () => {
+  const direct = await runtimeProofVerdict({
+    verify: async () => true,
+    verifyAndEmit: { staticCall: async () => { throw new Error('must not run'); } },
+  }, ['args']);
+  assert.equal(direct, true);
+
+  const fallback = await runtimeProofVerdict({
+    verify: async () => { throw new Error('selector unavailable'); },
+    verifyAndEmit: { staticCall: async () => true },
+  }, ['args']);
+  assert.equal(fallback, true);
+
+  const rejected = await runtimeProofVerdict({
+    verify: async () => { throw new Error('rejected'); },
+    verifyAndEmit: { staticCall: async () => { throw new Error('rejected'); } },
+  }, ['args']);
+  assert.equal(rejected, false);
 });

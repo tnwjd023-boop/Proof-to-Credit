@@ -12,6 +12,7 @@
     "compile": "node scripts/compile.js",
     "proof:fetch": "node scripts/fetch-proof.js",
     "probe": "node scripts/probe-proof.js",
+    "resume": "node scripts/resume.js",
     "source:deploy": "node scripts/deploy-source.js",
     "source:open": "node scripts/source-actions.js open --amount 50",
     "source:repay": "node scripts/source-actions.js repay --amount 20",

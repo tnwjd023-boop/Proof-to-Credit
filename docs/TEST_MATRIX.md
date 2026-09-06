@@ -58,6 +58,16 @@ These are `eth_call` observations, not failed transaction receipts or persistent
 - `commitCredit()` records a bounded accounting commitment only; it transfers no funds.
 - Canonical T12 uses one EOA as source borrower, destination borrower, and policy owner. Execution domains are separated; independent institutions are not demonstrated.
 
-## Deferred to T15
+## T15 reproducibility and interruption safety
 
-- T15: submission-time proof preflight, bounded refresh/retry, manifest-derived expectations, resumable execution, and exact deployment artifact evidence.
+| Boundary | Evidence | Result |
+| --- | --- | --- |
+| Saved proof freshness | `ensureFreshProof` unit tests plus BlockProver preflight in `scripts/submit-proof.js` | Reuse only after runtime success; otherwise refresh exactly once and reverify before signer construction |
+| Run-specific values | `deriveExpectedSubmission` and `submissionRecord` tests | Principal, repayment, debt, sequence, block, index, and state version are not fixed to the canonical run |
+| Crash after broadcast | `recordPending`, `validatePendingTransaction`, `classifyPendingReceipt`, `clearPending`, and `finalizePending` tests plus journaling in every write script | Pending transaction identity is preserved; retry validates and recovers the recorded transaction instead of sending a replacement |
+| Replay and resume | `proofUseStatus` and completed-script checks | Same destination returns `COMPLETE`; a saved proof remains available to a different destination |
+| Evidence integrity | exclusive, atomic, BigInt, and credential-screening tests | Existing initial manifest is not overwritten; updates retain unrelated records; common secret-bearing JSON is rejected |
+| Canonical public run | read-only `scripts/resume.js` audit | Eight status-1 receipts, source, decoder, and gate code hashes, debt30, and committed30 were rechecked through public RPC |
+| Actual receipt recovery | `runs/t15-recovery-check/manifest.json` | Five public T05 deployment/action transactions were journaled and finalized by receipt with zero new broadcasts |
+
+The interruption state machine is deterministic and local; T15 did not deliberately broadcast a redundant transaction or kill a live process. Actual proof authenticity and negative runtime behavior remain evidenced separately by T14.

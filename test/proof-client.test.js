@@ -2,7 +2,7 @@
 
 const test = require('node:test');
 const assert = require('node:assert/strict');
-const { fetchProof, normalizeProof, resumableProof, selectProofTarget, verifierArgs } = require('../src/proof-client');
+const { ensureFreshProof, fetchProof, normalizeProof, resumableProof, selectProofTarget, verifierArgs } = require('../src/proof-client');
 
 const hash = (byte) => `0x${byte.repeat(64)}`;
 const txHash = hash('a');
@@ -87,4 +87,41 @@ test('selects the opening or repayment manifest record by transaction hash', () 
 test('refresh bypasses a saved proof whose continuity path may have expired', () => {
   assert.equal(resumableProof(valid, { chainKey: 1n }, true), null);
   assert.equal(resumableProof(valid, { chainKey: 1n }, false).chainKey, '1');
+});
+
+test('submission preflight reuses a saved proof only when runtime verification succeeds', async () => {
+  let refreshCalls = 0;
+  const result = await ensureFreshProof({
+    savedProof: valid,
+    verifyProof: async (proof) => proof === valid,
+    refreshProof: async () => { refreshCalls += 1; return { ...valid, cached: true }; },
+  });
+  assert.equal(result.proof, valid);
+  assert.equal(result.refreshed, false);
+  assert.equal(refreshCalls, 0);
+});
+
+test('submission preflight refreshes one stale proof and verifies the replacement', async () => {
+  const fresh = { ...valid, cached: true };
+  const verified = [];
+  let refreshCalls = 0;
+  const result = await ensureFreshProof({
+    savedProof: valid,
+    verifyProof: async (proof) => { verified.push(proof); return proof === fresh; },
+    refreshProof: async () => { refreshCalls += 1; return fresh; },
+  });
+  assert.equal(result.proof, fresh);
+  assert.equal(result.refreshed, true);
+  assert.deepEqual(verified, [valid, fresh]);
+  assert.equal(refreshCalls, 1);
+});
+
+test('submission preflight blocks when a single refresh is still unverifiable', async () => {
+  let refreshCalls = 0;
+  await assert.rejects(() => ensureFreshProof({
+    savedProof: valid,
+    verifyProof: async () => false,
+    refreshProof: async () => { refreshCalls += 1; return { ...valid, cached: true }; },
+  }), /fresh proof failed runtime verification/);
+  assert.equal(refreshCalls, 1);
 });

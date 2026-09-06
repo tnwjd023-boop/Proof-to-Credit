@@ -31,10 +31,15 @@ test('submission record requires successful initialized debt50 state', () => {
     blockNumber: 7,
     status: 1,
     state: [true, 50_000_000n, 0n, 50_000_000n, 1n, 11_643_709n, 80n, 1n],
+    expected: { principal: 50_000_000n, repaid: 0n, debt: 50_000_000n, sequence: 1n, sourceBlock: 11_643_709n, txIndex: 80n, stateVersion: 1n },
   });
   assert.equal(record.verifiedDebt, '50000000');
   assert.equal(record.stateVersion, '1');
   assert.throws(() => submissionRecord({ txHash: '0x', blockNumber: 7, status: 0, state: [] }), /receipt/);
+  assert.throws(() => submissionRecord({
+    txHash: '0x', blockNumber: 7, status: 1,
+    state: [true, 50_000_000n, 0n, 50_000_000n, 1n, 11_643_709n, 80n, 1n],
+  }), /expected acceptance state is required/);
 });
 
 test('submission record validates the expected repayment state', () => {
@@ -43,8 +48,21 @@ test('submission record validates the expected repayment state', () => {
     blockNumber: 8,
     status: 1,
     state: [true, 50_000_000n, 20_000_000n, 30_000_000n, 2n, 11_643_980n, 77n, 2n],
-    expected: { repaid: 20_000_000n, debt: 30_000_000n, sequence: 2n, sourceBlock: 11_643_980n, txIndex: 77n, stateVersion: 2n },
+    expected: { principal: 50_000_000n, repaid: 20_000_000n, debt: 30_000_000n, sequence: 2n, sourceBlock: 11_643_980n, txIndex: 77n, stateVersion: 2n },
   });
   assert.equal(record.totalRepaid, '20000000');
   assert.equal(record.verifiedDebt, '30000000');
+});
+
+test('submission record accepts manifest-derived values without T05 numeric defaults', () => {
+  const record = submissionRecord({
+    txHash: `0x${'ef'.repeat(32)}`,
+    blockNumber: 9,
+    status: 1,
+    state: [true, 700n, 250n, 450n, 2n, 202n, 11n, 2n],
+    expected: { principal: 700n, repaid: 250n, debt: 450n, sequence: 2n, sourceBlock: 202n, txIndex: 11n, stateVersion: 2n },
+  });
+  assert.equal(record.principalOpened, '700');
+  assert.equal(record.totalRepaid, '250');
+  assert.equal(record.verifiedDebt, '450');
 });

@@ -20,16 +20,19 @@ function destinationConstructorArgs({ manifest, verifier, decoder }) {
 
 function submissionRecord({ txHash, blockNumber, status, state, expected = {} }) {
   if (Number(status) !== 1) throw new Error('CC3 submission receipt failed');
+  const fields = ['principal', 'repaid', 'debt', 'sequence', 'sourceBlock', 'txIndex', 'stateVersion'];
+  if (fields.some((field) => expected[field] === undefined)) throw new Error('complete expected acceptance state is required');
   const [initialized, principal, repaid, debt, sequence, sourceBlock, txIndex, stateVersion] = state;
   const target = {
-    repaid: expected.repaid ?? 0n,
-    debt: expected.debt ?? 50_000_000n,
-    sequence: expected.sequence ?? 1n,
-    sourceBlock: expected.sourceBlock ?? 11_643_709n,
-    txIndex: expected.txIndex ?? 80n,
-    stateVersion: expected.stateVersion ?? 1n,
+    principal: expected.principal,
+    repaid: expected.repaid,
+    debt: expected.debt,
+    sequence: expected.sequence,
+    sourceBlock: expected.sourceBlock,
+    txIndex: expected.txIndex,
+    stateVersion: expected.stateVersion,
   };
-  if (!initialized || principal !== 50_000_000n || repaid !== target.repaid || debt !== target.debt || sequence !== target.sequence || sourceBlock !== target.sourceBlock || txIndex !== target.txIndex || stateVersion !== target.stateVersion) {
+  if (!initialized || principal !== target.principal || repaid !== target.repaid || debt !== target.debt || sequence !== target.sequence || sourceBlock !== target.sourceBlock || txIndex !== target.txIndex || stateVersion !== target.stateVersion) {
     throw new Error('CC3 stored state does not match expected acceptance state');
   }
   return {

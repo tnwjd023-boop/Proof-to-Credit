@@ -30,4 +30,17 @@ function evidenceClock(now = () => new Date().toISOString()) {
   return { startedAt: now(), completedAt: () => now() };
 }
 
-module.exports = { buildTamperedProofs, contractErrorName, evidenceClock };
+async function runtimeProofVerdict(prover, args, blockTag) {
+  const overrides = blockTag === undefined ? [] : [{ blockTag }];
+  try {
+    return Boolean(await prover.verify(...args, ...overrides));
+  } catch {
+    try {
+      return Boolean(await prover.verifyAndEmit.staticCall(...args, ...overrides));
+    } catch {
+      return false;
+    }
+  }
+}
+
+module.exports = { buildTamperedProofs, contractErrorName, evidenceClock, runtimeProofVerdict };

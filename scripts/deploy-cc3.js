@@ -6,6 +6,13 @@ const { ContractFactory, JsonRpcProvider, Wallet, keccak256 } = require('ethers'
 const { compileContracts } = require('./compile');
 const { networkConfig } = require('../src/config');
 const { destinationConstructorArgs } = require('../src/cc3-run');
+const {
+  classifyPendingReceipt,
+  clearPending,
+  recordPending,
+  validatePendingTransaction,
+  writeJsonAtomic,
+} = require('../src/evidence');
 
 function runId() {
   const index = process.argv.indexOf('--run');
@@ -19,45 +26,102 @@ function option(name) {
   return index >= 0 ? process.argv[index + 1] : undefined;
 }
 
-async function deployChecked(factory, args, provider) {
-  const contract = await factory.deploy(...args);
-  const transaction = contract.deploymentTransaction();
-  const receipt = await transaction.wait();
-  if (receipt.status !== 1) throw new Error('CC3 deployment receipt failed');
-  const address = await contract.getAddress();
-  const code = await provider.getCode(address, receipt.blockNumber);
-  if (code === '0x') throw new Error('CC3 deployment has no runtime code');
-  return { contract, address, transactionHash: transaction.hash, blockNumber: receipt.blockNumber, codeHash: keccak256(code), codeBytes: (code.length - 2) / 2 };
-}
-
 async function main() {
   require('dotenv').config({ quiet: true });
   const id = runId();
   const slot = option('--slot') || 'destination';
   if (!/^destination[A-Za-z0-9]*$/.test(slot)) throw new Error('Invalid destination --slot');
   const manifestPath = path.join(__dirname, '..', 'runs', id, 'manifest.json');
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  if (manifest[slot]) throw new Error(`${slot} already exists for this run`);
+  let manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  if (manifest[slot]?.gate?.address) {
+    console.log(JSON.stringify({ status: 'COMPLETE', destination: manifest[slot] }, null, 2));
+    return;
+  }
+  if (manifest[slot]?.pending && !['decoder-deploy', 'gate-deploy'].includes(manifest[slot].pending.kind)) {
+    throw new Error('a non-deployment destination transaction must be recovered first');
+  }
+
   const provider = new JsonRpcProvider(networkConfig.destination.rpcUrl);
   try {
     const network = await provider.getNetwork();
-    if (network.chainId !== 102031n) throw new Error(`Refusing non-CC3 chainId ${network.chainId}`);
-    const signer = new Wallet(process.env.PRIVATE_KEY, provider);
-    if (signer.address !== manifest.source.borrower) throw new Error('signer does not match run borrower');
+    if (network.chainId !== networkConfig.destination.evmChainId) throw new Error(`Refusing non-CC3 chainId ${network.chainId}`);
     const artifacts = compileContracts().contracts;
-    const decoder = await deployChecked(new ContractFactory(artifacts.EvmV1Decoder.abi, artifacts.EvmV1Decoder.bytecode, signer), [], provider);
-    const gateArgs = destinationConstructorArgs({ manifest, verifier: networkConfig.destination.blockProver, decoder: decoder.address });
-    const gate = await deployChecked(new ContractFactory(artifacts.VerifiedDebtGate.abi, artifacts.VerifiedDebtGate.bytecode, signer), gateArgs, provider);
-    manifest[slot] = {
+    manifest[slot] ||= {
       network: 'Creditcoin CC3 Testnet',
       chainId: network.chainId.toString(),
       verifier: networkConfig.destination.blockProver,
-      decoder: { address: decoder.address, deploymentTransactionHash: decoder.transactionHash, blockNumber: decoder.blockNumber, codeHash: decoder.codeHash, codeBytes: decoder.codeBytes },
-      gate: { address: gate.address, deploymentTransactionHash: gate.transactionHash, blockNumber: gate.blockNumber, codeHash: gate.codeHash, codeBytes: gate.codeBytes },
       initialCreditLimit: '60000000',
     };
-    fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-    console.log(JSON.stringify(manifest[slot], null, 2));
+
+    if (manifest[slot].pending) {
+      const pending = manifest[slot].pending;
+      const transaction = await provider.getTransaction(pending.transactionHash);
+      validatePendingTransaction(transaction, pending);
+      const receipt = await provider.getTransactionReceipt(pending.transactionHash);
+      const status = classifyPendingReceipt(receipt, pending);
+      if (status === 'PENDING') throw new Error(`${pending.kind} is still pending; no replacement was sent`);
+      if (status === 'REVERTED') throw new Error(`${pending.kind} reverted; pending evidence was retained`);
+      if (!receipt.contractAddress) throw new Error(`${pending.kind} receipt has no contract address`);
+      const code = await provider.getCode(receipt.contractAddress);
+      if (code === '0x') throw new Error(`${pending.kind} has no runtime code`);
+      const record = {
+        address: receipt.contractAddress,
+        deploymentTransactionHash: receipt.hash,
+        blockNumber: receipt.blockNumber,
+        codeHash: keccak256(code),
+        codeBytes: (code.length - 2) / 2,
+      };
+      if (pending.kind === 'decoder-deploy') manifest[slot].decoder = record;
+      else manifest[slot].gate = record;
+      manifest = clearPending(manifest, slot, pending.kind, receipt.hash);
+      writeJsonAtomic(manifestPath, manifest);
+      console.log(JSON.stringify({ status: 'RECOVERED', recoveredKind: pending.kind, destination: manifest[slot] }, null, 2));
+      return;
+    }
+
+    const signer = new Wallet(process.env.PRIVATE_KEY, provider);
+    if (signer.address !== manifest.source.borrower) throw new Error('signer does not match run borrower');
+    if (!manifest[slot].decoder?.address) {
+      const decoder = await new ContractFactory(artifacts.EvmV1Decoder.abi, artifacts.EvmV1Decoder.bytecode, signer).deploy();
+      const transaction = decoder.deploymentTransaction();
+      manifest = recordPending(manifest, slot, {
+        kind: 'decoder-deploy', transactionHash: transaction.hash, from: transaction.from, to: null,
+        chainId: transaction.chainId.toString(), dataHash: keccak256(transaction.data), value: transaction.value.toString(), sentAt: new Date().toISOString(),
+      });
+      writeJsonAtomic(manifestPath, manifest);
+      const receipt = await transaction.wait();
+      const status = classifyPendingReceipt(receipt, manifest[slot].pending);
+      if (status !== 'CONFIRMED') throw new Error(`decoder deployment ${status.toLowerCase()}; pending evidence was retained`);
+      const code = await provider.getCode(receipt.contractAddress);
+      if (code === '0x') throw new Error('decoder deployment has no runtime code');
+      manifest[slot].decoder = {
+        address: receipt.contractAddress, deploymentTransactionHash: receipt.hash, blockNumber: receipt.blockNumber,
+        codeHash: keccak256(code), codeBytes: (code.length - 2) / 2,
+      };
+      manifest = clearPending(manifest, slot, 'decoder-deploy', receipt.hash);
+      writeJsonAtomic(manifestPath, manifest);
+    }
+
+    const gateArgs = destinationConstructorArgs({ manifest, verifier: networkConfig.destination.blockProver, decoder: manifest[slot].decoder.address });
+    const gate = await new ContractFactory(artifacts.VerifiedDebtGate.abi, artifacts.VerifiedDebtGate.bytecode, signer).deploy(...gateArgs);
+    const transaction = gate.deploymentTransaction();
+    manifest = recordPending(manifest, slot, {
+      kind: 'gate-deploy', transactionHash: transaction.hash, from: transaction.from, to: null,
+      chainId: transaction.chainId.toString(), dataHash: keccak256(transaction.data), value: transaction.value.toString(), sentAt: new Date().toISOString(),
+    });
+    writeJsonAtomic(manifestPath, manifest);
+    const receipt = await transaction.wait();
+    const status = classifyPendingReceipt(receipt, manifest[slot].pending);
+    if (status !== 'CONFIRMED') throw new Error(`gate deployment ${status.toLowerCase()}; pending evidence was retained`);
+    const code = await provider.getCode(receipt.contractAddress);
+    if (code === '0x') throw new Error('gate deployment has no runtime code');
+    manifest[slot].gate = {
+      address: receipt.contractAddress, deploymentTransactionHash: receipt.hash, blockNumber: receipt.blockNumber,
+      codeHash: keccak256(code), codeBytes: (code.length - 2) / 2,
+    };
+    manifest = clearPending(manifest, slot, 'gate-deploy', receipt.hash);
+    writeJsonAtomic(manifestPath, manifest);
+    console.log(JSON.stringify({ status: 'CONFIRMED', destination: manifest[slot] }, null, 2));
   } finally {
     provider.destroy();
   }

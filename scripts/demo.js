@@ -2,8 +2,9 @@
 
 const fs = require('node:fs');
 const path = require('node:path');
-const { Contract, JsonRpcProvider, Wallet } = require('ethers');
+const { Contract, FetchRequest, JsonRpcProvider, Wallet, keccak256 } = require('ethers');
 const { networkConfig } = require('../src/config');
+const { classifyPendingReceipt, finalizePending, recordPending, validatePendingTransaction, writeJsonAtomic } = require('../src/evidence');
 const { assertScenario } = require('../src/scenario-result');
 
 function option(name) {
@@ -23,6 +24,12 @@ function serialDecision(decision) {
   };
 }
 
+function provider(url) {
+  const request = new FetchRequest(url);
+  request.timeout = 15_000;
+  return new JsonRpcProvider(request);
+}
+
 async function main() {
   require('dotenv').config({ quiet: true });
   const id = option('--run');
@@ -33,31 +40,68 @@ async function main() {
   if (option('--mode') !== 'testnet') throw new Error('Only --mode testnet is allowed');
   const root = path.join(__dirname, '..');
   const manifestPath = path.join(root, 'runs', id, 'manifest.json');
-  const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
-  const destination = manifest[slot];
+  let manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf8'));
+  let destination = manifest[slot];
   if (!destination?.submissions?.['debt-opened'] || !destination.submissions['debt-repaid']) {
     throw new Error('opening and repayment proofs must be submitted first');
   }
-  if (destination.demo) throw new Error('demo commitment already exists');
+  if (destination.demo) {
+    console.log(JSON.stringify({ status: 'COMPLETE', demo: destination.demo }, null, 2));
+    return;
+  }
+  if (destination.pending && destination.pending.kind !== 'commit-credit') {
+    throw new Error('a proof submission is pending and must be recovered first');
+  }
+
   const artifact = JSON.parse(fs.readFileSync(path.join(root, 'artifacts', 'contracts.json'))).contracts.VerifiedDebtGate;
-  const provider = new JsonRpcProvider(networkConfig.destination.rpcUrl);
+  const cc3 = provider(networkConfig.destination.rpcUrl);
   try {
-    if ((await provider.getNetwork()).chainId !== 102031n) throw new Error('Refusing non-CC3 network');
-    const signer = new Wallet(process.env.PRIVATE_KEY, provider);
-    const gate = new Contract(destination.gate.address, artifact.abi, signer);
-    const beforeRepayment = await gate.evaluate.staticCall(30_000_000n, { blockTag: destination.submissions['debt-opened'].blockNumber });
-    const afterRepayment = await gate.evaluate(30_000_000n);
-    const state = await gate.getState();
-    if (state.stateVersion_ !== 2n || state.verifiedDebt_ !== 30_000_000n) throw new Error('gate is not at debt30 version2');
-    const transaction = await gate.commitCredit(30_000_000n, state.stateVersion_, await gate.policyVersion());
-    const receipt = await transaction.wait();
-    if (receipt.status !== 1) throw new Error('commitCredit receipt failed');
-    const afterCommit = await gate.evaluate(1n);
-    const committedCredit = await gate.committedCredit();
+    if ((await cc3.getNetwork()).chainId !== networkConfig.destination.evmChainId) throw new Error('Refusing non-CC3 network');
+    const gateReadOnly = new Contract(destination.gate.address, artifact.abi, cc3);
+
+    let receipt;
+    if (destination.pending) {
+      const transaction = await cc3.getTransaction(destination.pending.transactionHash);
+      validatePendingTransaction(transaction, destination.pending);
+      receipt = await cc3.getTransactionReceipt(destination.pending.transactionHash);
+      const status = classifyPendingReceipt(receipt, destination.pending);
+      if (status === 'PENDING') throw new Error('recorded commit is still pending; no replacement was sent');
+      if (status === 'REVERTED') throw new Error('recorded commit reverted; pending evidence was retained');
+    } else {
+      const currentDecision = await gateReadOnly.evaluate(30_000_000n);
+      const state = await gateReadOnly.getState();
+      const committed = await gateReadOnly.committedCredit();
+      if (!currentDecision.allowed || state.stateVersion_ !== 2n || state.verifiedDebt_ !== 30_000_000n || committed !== 0n) {
+        throw new Error('gate is not at the uncommitted debt30/version2 demo state');
+      }
+      const signer = new Wallet(process.env.PRIVATE_KEY, cc3);
+      const gate = gateReadOnly.connect(signer);
+      const transaction = await gate.commitCredit(30_000_000n, state.stateVersion_, currentDecision.policyVersion);
+      manifest = recordPending(manifest, slot, {
+        kind: 'commit-credit',
+        transactionHash: transaction.hash,
+        from: transaction.from,
+        to: destination.gate.address,
+        chainId: transaction.chainId.toString(),
+        dataHash: keccak256(transaction.data),
+        value: transaction.value.toString(),
+        sentAt: new Date().toISOString(),
+      });
+      writeJsonAtomic(manifestPath, manifest);
+      receipt = await transaction.wait();
+      const status = classifyPendingReceipt(receipt, manifest[slot].pending);
+      if (status !== 'CONFIRMED') throw new Error(`commit transaction ${status.toLowerCase()}; pending evidence was retained`);
+    }
+
+    destination = manifest[slot];
+    const beforeRepayment = await gateReadOnly.evaluate(30_000_000n, { blockTag: destination.submissions['debt-opened'].blockNumber });
+    const afterRepayment = await gateReadOnly.evaluate(30_000_000n, { blockTag: destination.submissions['debt-repaid'].blockNumber });
+    const afterCommit = await gateReadOnly.evaluate(1n, { blockTag: receipt.blockNumber });
+    const committedCredit = await gateReadOnly.committedCredit({ blockTag: receipt.blockNumber });
     const verdict = assertScenario({ beforeRepayment, afterRepayment, afterCommit, committedCredit });
-    destination.demo = {
+    const record = {
       ...verdict,
-      commitTransactionHash: transaction.hash,
+      commitTransactionHash: receipt.hash,
       commitBlockNumber: receipt.blockNumber,
       receiptStatus: Number(receipt.status),
       decisions: {
@@ -67,10 +111,11 @@ async function main() {
       },
       verifiedAt: new Date().toISOString(),
     };
-    fs.writeFileSync(manifestPath, `${JSON.stringify(manifest, null, 2)}\n`);
-    console.log(JSON.stringify(destination.demo, null, 2));
+    manifest = finalizePending(manifest, slot, 'commit-credit', record);
+    writeJsonAtomic(manifestPath, manifest);
+    console.log(JSON.stringify({ status: 'CONFIRMED', demo: record }, null, 2));
   } finally {
-    provider.destroy();
+    cc3.destroy();
   }
 }
 

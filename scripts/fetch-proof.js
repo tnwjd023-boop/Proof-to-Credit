@@ -5,6 +5,7 @@ const path = require('node:path');
 const { Contract, FetchRequest, JsonRpcProvider } = require('ethers');
 const { networkConfig } = require('../src/config');
 const { fetchProof, resumableProof, selectProofTarget, verifierArgs } = require('../src/proof-client');
+const { writeJsonAtomic } = require('../src/evidence');
 
 const MERKLE = '(bytes32 root,(bytes32 hash,bool isLeft)[] siblings)';
 const CONTINUITY = '(bytes32 lowerEndpointDigest,bytes32[] roots)';
@@ -113,7 +114,7 @@ async function main() {
       verifiedAt: new Date().toISOString(),
     };
     fs.mkdirSync(proofsDirectory, { recursive: true });
-    fs.writeFileSync(proofPath, `${JSON.stringify(evidence, null, 2)}\n`);
+    writeJsonAtomic(proofPath, evidence);
     console.log(JSON.stringify({ classification: evidence.classification, proofPath, runtime: evidence.runtime }, null, 2));
   } finally {
     source.destroy();

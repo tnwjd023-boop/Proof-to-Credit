@@ -99,4 +99,15 @@ function resumableProof(savedBundle, expected, refresh) {
   return refresh ? null : normalizeProof(savedBundle, expected);
 }
 
-module.exports = { POLL_INTERVAL_MS, TIMEOUT_MS, fetchProof, normalizeProof, resumableProof, selectProofTarget, verifierArgs };
+async function ensureFreshProof({ savedProof, verifyProof, refreshProof }) {
+  let savedVerdict = false;
+  try { savedVerdict = await verifyProof(savedProof); } catch {}
+  if (savedVerdict === true) return { proof: savedProof, refreshed: false };
+  const proof = await refreshProof();
+  let freshVerdict = false;
+  try { freshVerdict = await verifyProof(proof); } catch {}
+  if (freshVerdict !== true) throw new Error('fresh proof failed runtime verification');
+  return { proof, refreshed: true };
+}
+
+module.exports = { POLL_INTERVAL_MS, TIMEOUT_MS, ensureFreshProof, fetchProof, normalizeProof, resumableProof, selectProofTarget, verifierArgs };

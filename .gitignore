@@ -8,6 +8,9 @@ cache/
 runs/*
 !runs/*/
 !runs/*/manifest.json
+!runs/*/negative.json
+!runs/*/proofs/
+!runs/*/proofs/*.json
 !runs/probe/
 !runs/probe/.gitkeep
 !runs/probe/*.json

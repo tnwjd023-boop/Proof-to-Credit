@@ -178,3 +178,16 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - A read-only replay of the opening proof against canonical T12 gate `0xC97b7EA6de5fc4Cb39D7Fc52881B3d98f4b68147` decoded to `AlreadyProcessed`.
 - Canonical application state hash was identical before and after all calls: `0xf7185a0001933e757aeb3facc0eb10387bd7682552e4c04d5bd0cf39e3090063`.
 - Evidence: `runs/20260906-t05/negative.json`. All results are `eth_call`; no transaction was broadcast and no rejection log or receipt was created.
+
+## T15 — Resumable CLI and evidence packaging
+
+- Status: **DONE — RESUMABLE AND READ-ONLY RE-AUDITED**.
+- Added `scripts/resume.js`. It reads the run manifest, identifies the next incomplete step, and never signs or broadcasts. A supplied recovery transaction must exist on CC3 and target the selected gate.
+- Proof submission now checks the exact saved bundle through the live BlockProver before signer construction. An invalid or stale bundle is refreshed once for the same source transaction and must pass runtime verification again before broadcast.
+- Removed run-specific repayment constants from submission acceptance. Principal, cumulative repayment, outstanding debt, sequence, block height, and transaction index are derived from the manifest and verified proof.
+- Every broadcastable step records transaction identity immediately after broadcast: source deployment/open/repay, decoder/gate deployment, proof submission, and credit commitment. Recovery checks hash, sender, chain, target, calldata hash, value, receipt status, and step-specific state before finalizing instead of sending a duplicate. Completed steps return `COMPLETE`.
+- Manifest updates use secret-screened atomic JSON replacement; initial run creation is exclusive and refuses an existing manifest. Public proof and negative JSON paths are explicitly allowed by `.gitignore`.
+- `test/resume.test.js` covers incomplete-step planning across source and destination journals, pending receipt and full transaction identity checks, same-destination replay avoidance, new-destination proof reuse, proof readiness, dynamic expectations, hash-bound finalization, BigInt serialization, exclusive creation, atomic replacement, and credential-field rejection.
+- Read-only canonical re-audit: `node scripts/resume.js --run 20260906-t05 --slot destinationT12` verified eight successful receipts, all three deployed code hashes, `verifiedDebt=30000000`, and `committedCredit=30000000`; result `COMPLETE`.
+- Actual receipt-recovery exercise: `runs/t15-recovery-check/manifest.json` rebuilt source deploy/open/repay and decoder/gate deployment records from five already-public T05 transaction hashes, clearing each pending journal without broadcasting.
+- No new testnet transaction was sent for T15. Proof/commit interruption edges are covered deterministically at the journal/receipt state-machine boundary; the completed public run is revalidated through read-only RPC.

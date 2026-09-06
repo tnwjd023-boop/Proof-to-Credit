@@ -17,3 +17,5 @@
 | The gate independently enforces the configured source EVM chain ID | FALSE | `sourceEvmChainId` is stored but not consumed by admission. Provenance is enforced by Attestcoin `chainKey=1`, BlockProver, and the fixed emitter. |
 | A REJECT decision is a persistent on-chain decision record | FALSE / OUT OF SCOPE | `evaluate` is a view call. Historical calls reproduce the result, but no successful rejection-record transaction exists. |
 | Actual BlockProver rejects mutated proof inputs | VERIFIED (T14 `eth_call`) | At CC3 block `5439094`, both source proofs verified normally while root, transaction-bytes, and continuity mutations failed. This is runtime rejection evidence, not a failed transaction receipt. |
+| A stale saved proof can be submitted without a current runtime check | FALSE | T15 checks the exact bundle before creating a signer, refreshes the same source transaction at most once, and requires the refreshed bundle to verify before broadcast. |
+| Re-running a completed proof or demo step sends another transaction | FALSE | Completed steps return `COMPLETE`; a journaled pending hash is reconciled from its receipt instead of being replaced. |
