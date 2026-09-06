@@ -46,4 +46,4 @@ This T09 deployment includes the T08 ordering rules and T09 repayment reconstruc
 - Credit commitment: `0xcf3d79a7d50c87dfc860bd067da91357c8bc695b5b48fb035cefa4571e3dbb20`
 - Final state: verified debt30, committed credit30, limit60, headroom0, state version3, policy version1
 
-This is the canonical T12 demo instance. Exact code hashes, blocks, decisions, and historical state hashes are in `runs/20260906-t05/manifest.json`.
+This is the canonical T12 demo instance. Exact code hashes, blocks, decisions, and historical state hashes are in `runs/20260906-t05/manifest.json`. The enforced source identifier is Attestcoin `chainKey=1`; `sourceEvmChainId` is descriptive and is not decoded during admission. T12 REJECT evidence is a historical `evaluate` result, not a persistent rejection transaction.

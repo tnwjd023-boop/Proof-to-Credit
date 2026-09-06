@@ -9,8 +9,10 @@
 | Proof-to-Credit integrates with KGLD | FALSE / OUT OF SCOPE | KGLD is an industry reference only. |
 | The prototype verifies physical gold, ownership, collateral rights, or actual transfers | FALSE / OUT OF SCOPE | Explicitly not claimed. |
 | The state is complete or always latest | FALSE / OUT OF SCOPE | It is an event-derived prefix for one single-draw loan. |
-| The policy uses proof-derived debt in its limit calculation | VERIFIED (local T10) | `evaluate` combines verified debt, destination commitments, and the destination-owned limit; a replacement testnet deployment is deferred until the complete policy/commit flow. |
+| The policy uses proof-derived debt in its limit calculation | VERIFIED (T12) | The canonical T12 gate used debt50/debt30 in historical `evaluate` calls and recorded a version-checked commit30 transaction. |
 | The policy derives gold value or collateral rights | FALSE / OUT OF SCOPE | Gold quantity and price are not policy inputs; `assetId` is a demo reference label only. |
 | An allowed decision reserves capacity by itself | FALSE | `evaluate` is read-only; only a successful version-checked `commitCredit` changes `committedCredit`. |
 | Competing commitments can reuse one observed headroom | REJECTED (local T11) | The first successful commitment increments `stateVersion`; a second request carrying the same version reverts. |
 | The full proof-to-state-to-policy path runs on public testnets | VERIFIED (T12) | Public Sepolia open/repay events were proven and applied on the canonical CC3 gate, followed by a successful version-checked commit30 transaction. |
+| The gate independently enforces the configured source EVM chain ID | FALSE | `sourceEvmChainId` is stored but not consumed by admission. Provenance is enforced by Attestcoin `chainKey=1`, BlockProver, and the fixed emitter. |
+| A REJECT decision is a persistent on-chain decision record | FALSE / OUT OF SCOPE | `evaluate` is a view call. Historical calls reproduce the result, but no successful rejection-record transaction exists. |

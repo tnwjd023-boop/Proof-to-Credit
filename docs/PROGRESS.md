@@ -160,3 +160,12 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - After commit, request1 was rejected: committed credit30, headroom0, proposed utilization `60,000,001`, state version3, policy version1.
 - The run records source events, proof applications, and the policy commitment as distinct transactions. No real lending or token transfer occurred.
 - TDD RED: scenario test failed because `src/scenario-result.js` was absent. GREEN: the local reject→allow→commit→reject scenario passed before testnet execution.
+
+## T13 — Application security and negative suite
+
+- Status: **DONE — LOCAL APPLICATION SECURITY MATRIX**.
+- Added `test/security.test.js` with eight attack groups covering failed receipts, emitter/signature/identity mismatch, malformed ABI, repayment arithmetic and timestamps, repayment after full repayment, duplicate matching logs, replay/order, authorization residue, and extreme-value fail-closed behavior.
+- Failed submissions assert unchanged `stateVersion`, `verifiedDebt`, `totalRepaid`, and position-derived `processedQueries`; the duplicate-log test confirms whole-batch rollback.
+- Added `docs/TEST_MATRIX.md` to separate local verifier-mock application evidence, real receipt decoding, actual BlockProver evidence, and actual CC3 storage evidence.
+- Corrected claim scope: `sourceEvmChainId` is stored but not independently checked; REJECT is a view result; the policy testnet claim now points to canonical T12.
+- No production contract change was required. Runtime tamper packaging remains T14; proof preflight/refresh and reusable evidence tooling remain T15.
