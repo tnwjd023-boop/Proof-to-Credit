@@ -2,18 +2,30 @@
 
 [![CI](https://github.com/tnwjd023-boop/Proof-to-Credit/actions/workflows/ci.yml/badge.svg)](https://github.com/tnwjd023-boop/Proof-to-Credit/actions/workflows/ci.yml)
 
-Proof-to-Credit is a testnet reference implementation of a narrow pipeline:
+**Verified external event → Reconstructed financial state → Independent policy evaluation → Atomic bounded capacity consumption**
+
+Proof-to-Credit is a public-testnet reference implementation of that narrow pipeline. One canonical run makes the state transition concrete:
 
 ```text
-Sepolia loan transaction
-  -> Attestcoin / CC3 BlockProver verification
-  -> receipt and event admission
-  -> loan-scoped verified principal state
-  -> independent CC3 credit policy
-  -> bounded local credit commitment
+Ethereum Sepolia                                      Creditcoin CC3 Testnet
+
+DebtOpened(50)  -- Attestcoin proof -->  verifiedDebt = 50
+                                            50 debt + 30 request > 60 limit
+                                            REJECT · headroom 10
+
+DebtRepaid(20)  -- Attestcoin proof -->  verifiedDebt = 30
+                                            30 debt + 30 request = 60 limit
+                                            ALLOW  · headroom 30
+
+                                         commitCredit(30)
+                                            committedCredit = 30
+                                            headroom = 0
+                                            next request 1 → REJECT
 ```
 
-The proof establishes inclusion of the supplied source transaction bytes in the supported source chain path. The application then validates the receipt, emitter, event identity, sequence, and repayment arithmetic. It does **not** prove creditworthiness, collateral, gold reserves, custody, price, or that credit should be granted. `commitCredit` is an accounting commitment; it does not transfer or lend funds.
+All values use the single six-decimal accounting unit `DEMO_USD_6` and are backed by the [canonical run manifest](runs/20260906-t05/manifest.json). The proof establishes inclusion of the supplied source transaction bytes in the supported source chain path. The application then validates the receipt, emitter, event identity, sequence, and repayment arithmetic. `REJECT` and `ALLOW` are reproducible `evaluate` view results; only `commitCredit` changes capacity.
+
+Attestcoin does **not** prove creditworthiness or decide whether credit should be granted. This prototype does not verify collateral, gold reserves, custody, price, complete history, or aggregate exposure. `commitCredit` is an accounting commitment; it does not transfer or lend funds. See the [submission description](docs/SUBMISSION.md) for the concise project narrative.
 
 ## Canonical public evidence
 
