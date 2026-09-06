@@ -16,6 +16,20 @@ contract VerifiedDebtGate {
     error MissingOpening();
     error InvalidSequence(uint64 supplied, uint64 expected);
     error InvalidRepayment();
+    error NotPolicyOwner(address caller);
+    error ZeroCreditLimit();
+
+    enum Reason { ALLOW, UNINITIALIZED, ZERO_AMOUNT, OVER_LIMIT }
+
+    struct DecisionView {
+        bool allowed;
+        Reason reason;
+        uint256 observedHeadroom;
+        uint256 proposedUtilization;
+        bytes32 stateHash;
+        uint64 stateVersion;
+        uint64 policyVersion;
+    }
 
     event SourceEventApplied(
         bytes32 indexed eventId,
@@ -29,6 +43,7 @@ contract VerifiedDebtGate {
         uint256 totalRepaid,
         uint64 stateVersion
     );
+    event PolicyUpdated(uint256 creditLimit, uint64 policyVersion);
 
     bytes32 private constant DEBT_OPENED_SIGNATURE = keccak256(
         "DebtOpened(bytes32,bytes32,address,bytes32,uint64,uint256,uint256,uint64)"
@@ -60,6 +75,9 @@ contract VerifiedDebtGate {
     uint64 public lastSourceTimestamp;
     uint64 public lastAdmittedAt;
     uint64 public stateVersion;
+    uint256 public creditLimit;
+    uint64 public policyVersion = 1;
+    uint256 public committedCredit;
     bytes32 public lastEventId;
     mapping(bytes32 => bool) public processedQueries;
 
@@ -87,6 +105,56 @@ contract VerifiedDebtGate {
         borrower = borrower_;
         policyOwner = policyOwner_;
         initialCreditLimit = initialCreditLimit_;
+        if (initialCreditLimit_ == 0) revert ZeroCreditLimit();
+        creditLimit = initialCreditLimit_;
+    }
+
+    function evaluate(uint256 requestedCredit) external view returns (DecisionView memory decision) {
+        bytes32 currentStateHash = stateHash();
+        if (!initialized) {
+            return DecisionView(false, Reason.UNINITIALIZED, 0, 0, currentStateHash, stateVersion, policyVersion);
+        }
+        uint256 utilization = verifiedDebt + committedCredit;
+        uint256 headroom = utilization < creditLimit ? creditLimit - utilization : 0;
+        if (requestedCredit == 0) {
+            return DecisionView(false, Reason.ZERO_AMOUNT, headroom, utilization, currentStateHash, stateVersion, policyVersion);
+        }
+        uint256 proposed = utilization + requestedCredit;
+        bool allowed = proposed <= creditLimit;
+        return DecisionView(
+            allowed,
+            allowed ? Reason.ALLOW : Reason.OVER_LIMIT,
+            headroom,
+            proposed,
+            currentStateHash,
+            stateVersion,
+            policyVersion
+        );
+    }
+
+    function setPolicy(uint256 newCreditLimit) external {
+        if (msg.sender != policyOwner) revert NotPolicyOwner(msg.sender);
+        if (newCreditLimit == 0) revert ZeroCreditLimit();
+        creditLimit = newCreditLimit;
+        policyVersion += 1;
+        emit PolicyUpdated(newCreditLimit, policyVersion);
+    }
+
+    function stateHash() public view returns (bytes32) {
+        return keccak256(
+            abi.encode(
+                initialized,
+                principalOpened,
+                totalRepaid,
+                verifiedDebt,
+                lastSequence,
+                lastEventId,
+                committedCredit,
+                creditLimit,
+                stateVersion,
+                policyVersion
+            )
+        );
     }
 
     function submitSourceTransaction(

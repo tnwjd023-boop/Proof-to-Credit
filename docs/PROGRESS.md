@@ -128,3 +128,13 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - Opening proof submission: `0x3f1906482b0775641b9c384ea04ce3f369a462b73bf05b512089c92728b1bbf8`; repayment proof submission: `0x56c78561186d8deb5cc7d96a19a91026e73e1902f1f0647953ca70be15fa28f1`.
 - Final CC3 state: initialized, principal `50,000,000`, cumulative repayment `20,000,000`, verified debt `30,000,000`, sequence `2`, source block `11643980`, source tx index `77`, state version `2`.
 - Local negative tests reject repayment before opening, sequence gaps, wrong unit, zero/over repayment, inconsistent cumulative repayment, and inconsistent outstanding amount without state residue.
+
+## T10 — Explainable credit-limit policy
+
+- Status: **DONE — LOCAL POLICY INVARIANTS**. No replacement CC3 deployment was made in this task.
+- `evaluate` returns only `ALLOW`, `UNINITIALIZED`, `ZERO_AMOUNT`, or `OVER_LIMIT`, together with observed headroom, proposed utilization, state hash, and fact/policy versions.
+- Before proof initialization, headroom is the sentinel `0` rather than the configured limit. After opening at debt50/limit60, request30 is rejected with headroom10 and proposed utilization80.
+- After verified repayment produces debt30, request30 is allowed exactly at limit60; request `30,000,001` is rejected and the minimum unit `1` is allowed.
+- Only immutable `policyOwner` may set a positive limit. Reducing the limit below current debt produces headroom0 and preserves the verified debt unchanged.
+- `headroom = max(creditLimit - verifiedDebt - committedCredit, 0)`. No gold quantity, price, or collateral value enters this policy calculation.
+- TDD RED: policy tests failed because `evaluate` and `setPolicy` were absent. GREEN: `test/policy.test.js` passed 3/3.

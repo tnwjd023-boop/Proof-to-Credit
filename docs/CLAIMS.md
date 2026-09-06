@@ -9,3 +9,5 @@
 | Proof-to-Credit integrates with KGLD | FALSE / OUT OF SCOPE | KGLD is an industry reference only. |
 | The prototype verifies physical gold, ownership, collateral rights, or actual transfers | FALSE / OUT OF SCOPE | Explicitly not claimed. |
 | The state is complete or always latest | FALSE / OUT OF SCOPE | It is an event-derived prefix for one single-draw loan. |
+| The policy uses proof-derived debt in its limit calculation | VERIFIED (local T10) | `evaluate` combines verified debt, destination commitments, and the destination-owned limit; a replacement testnet deployment is deferred until the complete policy/commit flow. |
+| The policy derives gold value or collateral rights | FALSE / OUT OF SCOPE | Gold quantity and price are not policy inputs; `assetId` is a demo reference label only. |
