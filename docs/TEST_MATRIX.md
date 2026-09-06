@@ -8,7 +8,7 @@ This matrix separates application behavior tested with a local verifier mock fro
 |---|---|---|
 | Local application | Receipt decoding, identity admission, ordering, sequence, arithmetic, rollback, policy, commitment | EthereumJS VM suites, including `test/security.test.js` |
 | Real receipt bytes | Vendored decoder handles persisted Sepolia transaction envelopes | `test/decoder.test.js` and persisted proof bundles |
-| Actual BlockProver | Runtime accepts normal Merkle/continuity proofs and rejects tampered controls | `runs/20260906-t05/proofs/*.json`; T14 will package fresh negative evidence |
+| Actual BlockProver | Runtime accepts normal proofs and rejects root, transaction-bytes, and continuity tampering | `runs/20260906-t05/negative.json`, observed at CC3 block `5439094` |
 | Actual CC3 storage | Proof submissions changed the canonical gate and commit consumed capacity | T12 transactions, manifest, and historical getters |
 
 ## Application security cases
@@ -36,7 +36,20 @@ Reverting security cases assert unchanged `stateVersion`, `verifiedDebt`, `total
 | extreme `uint256` principal | evaluation panics and commitment rejects; no over-allocation | Partially protected / fail-closed | `security.test.js` |
 | unseen tail repayment | destination may retain higher debt | Not proven by sequence; constrained by single-draw source | source mutation-surface tests |
 
-Synthetic receipt tests do not claim Attestcoin accepted mutated bytes. The verifier mock deliberately returns `true` to isolate application checks. Actual cryptographic tamper rejection belongs to T14.
+Synthetic receipt tests do not claim Attestcoin accepted mutated bytes. The verifier mock deliberately returns `true` to isolate application checks. T14 separately records actual BlockProver rejection of root, transaction-bytes, and continuity mutations for both source proofs.
+
+## T14 actual runtime negative evidence
+
+At CC3 block `5439094`, the saved opening and repayment bundles were checked through BlockProver `0x0000000000000000000000000000000000000FD2` using read-only calls:
+
+- both normal proofs returned `true`;
+- both Merkle-root mutations were rejected with `Merkle proof validation failed`;
+- both transaction-bytes mutations were rejected with `Merkle proof validation failed`;
+- both continuity-endpoint mutations were rejected with `Continuity proof does not match attestation or checkpoint`;
+- replaying the already accepted opening against canonical gate `0xC97b7EA6de5fc4Cb39D7Fc52881B3d98f4b68147` was rejected as `AlreadyProcessed`;
+- application `stateHash` remained `0xf7185a0001933e757aeb3facc0eb10387bd7682552e4c04d5bd0cf39e3090063` before and after.
+
+These are `eth_call` observations, not failed transaction receipts or persistent rejection logs. Full structured evidence is `runs/20260906-t05/negative.json`.
 
 ## Identity and decision limitations
 
@@ -45,7 +58,6 @@ Synthetic receipt tests do not claim Attestcoin accepted mutated bytes. The veri
 - `commitCredit()` records a bounded accounting commitment only; it transfers no funds.
 - Canonical T12 uses one EOA as source borrower, destination borrower, and policy owner. Execution domains are separated; independent institutions are not demonstrated.
 
-## Deferred to T14 and T15
+## Deferred to T15
 
-- T14: fresh BlockProver normal/root-tamper/continuity-tamper evidence and application replay `eth_call`, with target and block recorded.
 - T15: submission-time proof preflight, bounded refresh/retry, manifest-derived expectations, resumable execution, and exact deployment artifact evidence.

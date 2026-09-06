@@ -169,3 +169,12 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - Added `docs/TEST_MATRIX.md` to separate local verifier-mock application evidence, real receipt decoding, actual BlockProver evidence, and actual CC3 storage evidence.
 - Corrected claim scope: `sourceEvmChainId` is stored but not independently checked; REJECT is a view result; the policy testnet claim now points to canonical T12.
 - No production contract change was required. Runtime tamper packaging remains T14; proof preflight/refresh and reusable evidence tooling remain T15.
+
+## T14 — Actual runtime negative evidence
+
+- Status: **DONE — ACTUAL CC3 READ-ONLY NEGATIVE EVIDENCE**.
+- Added `scripts/demo-negative.js`, pure result/tamper helpers, and six focused unit tests developed through two RED→GREEN cycles.
+- At observed CC3 block `5439094`, both saved source proofs returned true through BlockProver; independent Merkle-root, transaction-bytes, and continuity-endpoint mutations were rejected for each proof.
+- A read-only replay of the opening proof against canonical T12 gate `0xC97b7EA6de5fc4Cb39D7Fc52881B3d98f4b68147` decoded to `AlreadyProcessed`.
+- Canonical application state hash was identical before and after all calls: `0xf7185a0001933e757aeb3facc0eb10387bd7682552e4c04d5bd0cf39e3090063`.
+- Evidence: `runs/20260906-t05/negative.json`. All results are `eth_call`; no transaction was broadcast and no rejection log or receipt was created.

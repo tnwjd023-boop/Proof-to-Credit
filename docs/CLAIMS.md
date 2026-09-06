@@ -16,3 +16,4 @@
 | The full proof-to-state-to-policy path runs on public testnets | VERIFIED (T12) | Public Sepolia open/repay events were proven and applied on the canonical CC3 gate, followed by a successful version-checked commit30 transaction. |
 | The gate independently enforces the configured source EVM chain ID | FALSE | `sourceEvmChainId` is stored but not consumed by admission. Provenance is enforced by Attestcoin `chainKey=1`, BlockProver, and the fixed emitter. |
 | A REJECT decision is a persistent on-chain decision record | FALSE / OUT OF SCOPE | `evaluate` is a view call. Historical calls reproduce the result, but no successful rejection-record transaction exists. |
+| Actual BlockProver rejects mutated proof inputs | VERIFIED (T14 `eth_call`) | At CC3 block `5439094`, both source proofs verified normally while root, transaction-bytes, and continuity mutations failed. This is runtime rejection evidence, not a failed transaction receipt. |

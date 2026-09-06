@@ -1,0 +1,84 @@
+{
+  "classification": "VERIFIED",
+  "callMode": "eth_call",
+  "startedAt": "2026-09-06T06:31:59.245Z",
+  "completedAt": "2026-09-06T06:32:02.082Z",
+  "sourceChainId": "11155111",
+  "destinationChainId": "102031",
+  "observedDestinationBlock": 5439094,
+  "completedDestinationBlock": 5439095,
+  "blockProver": "0x0000000000000000000000000000000000000FD2",
+  "applicationGate": "0xC97b7EA6de5fc4Cb39D7Fc52881B3d98f4b68147",
+  "proofs": [
+    {
+      "kind": "debt-opened",
+      "sourceTransactionHash": "0xa5c0954a0b148e84d37c68a87fc9d37d77c548f1aed4d522ee0c9009f92042cd",
+      "chainKey": "1",
+      "headerNumber": "11643709",
+      "sourceBlockNumber": "11643709",
+      "txIndex": "80",
+      "derivedIndex": "80",
+      "normal": {
+        "method": "verify.eth_call",
+        "verdict": true
+      },
+      "rootTampered": {
+        "method": "verifyAndEmit.eth_call",
+        "verdict": false,
+        "verifyFallbackReason": "execution reverted: \"Merkle proof validation failed\"",
+        "rejection": "execution reverted: \"Merkle proof validation failed\""
+      },
+      "bytesTampered": {
+        "method": "verifyAndEmit.eth_call",
+        "verdict": false,
+        "verifyFallbackReason": "execution reverted: \"Merkle proof validation failed\"",
+        "rejection": "execution reverted: \"Merkle proof validation failed\""
+      },
+      "continuityTampered": {
+        "method": "verifyAndEmit.eth_call",
+        "verdict": false,
+        "verifyFallbackReason": "execution reverted: \"Continuity proof does not match attestation or checkpoint\"",
+        "rejection": "execution reverted: \"Continuity proof does not match attestation or checkpoint\""
+      }
+    },
+    {
+      "kind": "debt-repaid",
+      "sourceTransactionHash": "0x326c666d0208e6f1625396a559cb78bb4e7783c56eda52c11643e7339cba0687",
+      "chainKey": "1",
+      "headerNumber": "11643980",
+      "sourceBlockNumber": "11643980",
+      "txIndex": "77",
+      "derivedIndex": "77",
+      "normal": {
+        "method": "verify.eth_call",
+        "verdict": true
+      },
+      "rootTampered": {
+        "method": "verifyAndEmit.eth_call",
+        "verdict": false,
+        "verifyFallbackReason": "execution reverted: \"Merkle proof validation failed\"",
+        "rejection": "execution reverted: \"Merkle proof validation failed\""
+      },
+      "bytesTampered": {
+        "method": "verifyAndEmit.eth_call",
+        "verdict": false,
+        "verifyFallbackReason": "execution reverted: \"Merkle proof validation failed\"",
+        "rejection": "execution reverted: \"Merkle proof validation failed\""
+      },
+      "continuityTampered": {
+        "method": "verifyAndEmit.eth_call",
+        "verdict": false,
+        "verifyFallbackReason": "execution reverted: \"Continuity proof does not match attestation or checkpoint\"",
+        "rejection": "execution reverted: \"Continuity proof does not match attestation or checkpoint\""
+      }
+    }
+  ],
+  "replay": {
+    "rejected": true,
+    "errorName": "AlreadyProcessed",
+    "rejection": "execution reverted (unknown custom error)"
+  },
+  "stateBeforeHash": "0xf7185a0001933e757aeb3facc0eb10387bd7682552e4c04d5bd0cf39e3090063",
+  "stateAfterHash": "0xf7185a0001933e757aeb3facc0eb10387bd7682552e4c04d5bd0cf39e3090063",
+  "note": "All checks are read-only eth_call observations. Rejections are not failed transaction receipts or persistent logs."
+}
