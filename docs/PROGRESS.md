@@ -138,3 +138,13 @@ Satisfied for decoder/VM work: exact compiler/dependency baseline exists, a real
 - Only immutable `policyOwner` may set a positive limit. Reducing the limit below current debt produces headroom0 and preserves the verified debt unchanged.
 - `headroom = max(creditLimit - verifiedDebt - committedCredit, 0)`. No gold quantity, price, or collateral value enters this policy calculation.
 - TDD RED: policy tests failed because `evaluate` and `setPolicy` were absent. GREEN: `test/policy.test.js` passed 3/3.
+
+## T11 — Atomic credit commitment and version races
+
+- Status: **DONE — LOCAL ATOMICITY INVARIANTS**. The complete T12 testnet deployment remains pending.
+- `commitCredit(amount, expectedStateVersion, expectedPolicyVersion)` independently rechecks immutable borrower authority, initialization, both versions, positive amount, and current headroom.
+- At verified debt30/limit60, commit30 succeeds atomically, increases `committedCredit` to 30 and fact `stateVersion` from 2 to 3, then request1 fails with zero headroom.
+- Two requests using the same fact version cannot both consume capacity: the first transition succeeds and the second fails `StaleStateVersion` even when both amounts would otherwise fit.
+- A policy change increments `policyVersion`, so a commitment carrying the earlier policy version fails. Unauthorized, uninitialized, zero, and over-limit paths leave state unchanged.
+- `CreditCommitted` records the borrower, amount, resulting commitment, both versions, and the pre-transition state hash.
+- TDD RED: all four cases failed because `commitCredit` was absent. GREEN: `test/commitment.test.js` passed 4/4.

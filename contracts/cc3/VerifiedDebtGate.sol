@@ -18,6 +18,12 @@ contract VerifiedDebtGate {
     error InvalidRepayment();
     error NotPolicyOwner(address caller);
     error ZeroCreditLimit();
+    error NotBorrower(address caller);
+    error Uninitialized();
+    error StaleStateVersion(uint64 supplied, uint64 current);
+    error StalePolicyVersion(uint64 supplied, uint64 current);
+    error ZeroCredit();
+    error CreditLimitExceeded(uint256 requested, uint256 headroom);
 
     enum Reason { ALLOW, UNINITIALIZED, ZERO_AMOUNT, OVER_LIMIT }
 
@@ -44,6 +50,14 @@ contract VerifiedDebtGate {
         uint64 stateVersion
     );
     event PolicyUpdated(uint256 creditLimit, uint64 policyVersion);
+    event CreditCommitted(
+        address indexed borrower,
+        uint256 amount,
+        uint256 committedCredit,
+        uint64 stateVersion,
+        uint64 policyVersion,
+        bytes32 previousStateHash
+    );
 
     bytes32 private constant DEBT_OPENED_SIGNATURE = keccak256(
         "DebtOpened(bytes32,bytes32,address,bytes32,uint64,uint256,uint256,uint64)"
@@ -138,6 +152,37 @@ contract VerifiedDebtGate {
         creditLimit = newCreditLimit;
         policyVersion += 1;
         emit PolicyUpdated(newCreditLimit, policyVersion);
+    }
+
+    function commitCredit(
+        uint256 requestedCredit,
+        uint64 expectedStateVersion,
+        uint64 expectedPolicyVersion
+    ) external {
+        if (msg.sender != borrower) revert NotBorrower(msg.sender);
+        if (!initialized) revert Uninitialized();
+        if (expectedStateVersion != stateVersion) {
+            revert StaleStateVersion(expectedStateVersion, stateVersion);
+        }
+        if (expectedPolicyVersion != policyVersion) {
+            revert StalePolicyVersion(expectedPolicyVersion, policyVersion);
+        }
+        if (requestedCredit == 0) revert ZeroCredit();
+        uint256 utilization = verifiedDebt + committedCredit;
+        uint256 headroom = utilization < creditLimit ? creditLimit - utilization : 0;
+        if (requestedCredit > headroom) revert CreditLimitExceeded(requestedCredit, headroom);
+
+        bytes32 previousStateHash = stateHash();
+        committedCredit += requestedCredit;
+        stateVersion += 1;
+        emit CreditCommitted(
+            borrower,
+            requestedCredit,
+            committedCredit,
+            stateVersion,
+            policyVersion,
+            previousStateHash
+        );
     }
 
     function stateHash() public view returns (bytes32) {
